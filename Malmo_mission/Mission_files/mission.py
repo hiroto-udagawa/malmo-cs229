@@ -23,7 +23,6 @@ import MalmoPython
 import os
 import sys
 import time
-
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
 # More interesting generator string: "3;7,44*49,73,35:1,159:4,95:13,35:13,159:11,95:10,159:14,159:6,35:6,95:6;12;"
@@ -77,9 +76,11 @@ print "Mission running ",
 
 # Loop until mission ends:
 while world_state.is_mission_running:
-    sys.stdout.write(".")
-    agent_host.sendCommand("move 1")
-    agent_host.sendCommand("jump 1")
+    print(world_state.video_frames[0].pixels)
+    #sys.stdout.write(".")
+    #print agent_host.getWorldState() 
+    #agent_host.sendCommand("move 1")
+    #agent_host.sendCommand("jump 1")
     time.sleep(0.01)
     world_state = agent_host.getWorldState()
     for error in world_state.errors:

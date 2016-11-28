@@ -13,14 +13,20 @@
       </Time>
 		</ServerInitialConditions>
 		<ServerHandlers>
-      <FlatWorldGenerator generatorString="3;7,220*1,5*3,2;3;dungeon" />
+			<FlatWorldGenerator generatorString="3;7,220*1,5*3,2;3;dungeon"/>
 			<DrawingDecorator>
-        <DrawCuboid x1="-15" y1="206" z1="-15" x2="15" y2="226" z2="15" type="stone"/>
-        <DrawCuboid x1="-14" y1="207" z1="-14" x2="14" y2="226" z2="14" type="air"/>								
-				<DrawLine x1="-8" y1="206" z1="2" x2="10" y2="206" z2="2" type="mob_spawner" variant="Zombie"/>  
+				<!-- coordinates for cuboid are inclusive -->
+				<DrawCuboid x1="-15" y1="47" z1="-15" x2="15" y2="70" z2="15" type="air" />
+				
+				<DrawCuboid x1="-15" y1="46" z1="-15" x2="15" y2="46" z2="15" type="glowstone" /> 
+				<DrawLine x1="-15" y1="47" z1="-14" x2="15" y2="52" z2="-14" type="torch" /> 
+				
+				<DrawBlock x="-10" y="46" z="0" type="mob_spawner" variant="Zombie"/>
+				<DrawBlock x="0" y="46" z="0" type="mob_spawner" variant="Zombie" />          
+				<DrawBlock x="10" y="46" z="0" type="mob_spawner" variant="Zombie"/>    
 				
 			</DrawingDecorator>
-			<ServerQuitFromTimeUp timeLimitMs="100000"/>
+			<ServerQuitFromTimeUp timeLimitMs="50000"/>
 			<ServerQuitWhenAnyAgentFinishes/>
 		</ServerHandlers>
 	</ServerSection>
@@ -28,22 +34,23 @@
 	<AgentSection mode="Survival">
 		<Name>Cristina</Name>
 		<AgentStart>
-      <Placement x="0" y="207.0" z="-14" pitch="20" yaw="0"/>
+			<Placement x="0" y="47.0" z="-12" pitch="20" yaw="0"/>
 			<Inventory>
 				<InventoryItem slot="0" type="iron_sword"/>
 			</Inventory>
 		</AgentStart>
 		<AgentHandlers>
-      <VideoProducer want_depth="false">
-          <Width>640</Width>
-          <Height>480</Height>
-      </VideoProducer>
-			<ContinuousMovementCommands />
+			<ContinuousMovementCommands turnSpeedDegs="360"/>
       <ObservationFromNearbyEntities>
           <Range name="entities" xrange="2" yrange="2" zrange="2" />
       </ObservationFromNearbyEntities>
 			<ObservationFromFullStats/>
 			<RewardForSendingCommand reward="-1" />
+			<AgentQuitFromTouchingBlockType>
+				<Block type="lava" />
+				<Block type="lapis_block" />
+			</AgentQuitFromTouchingBlockType>
 		</AgentHandlers>
 	</AgentSection>
+
 </Mission>
