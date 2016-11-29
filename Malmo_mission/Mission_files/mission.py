@@ -42,6 +42,10 @@ except RuntimeError as e:
 if agent_host.receivedArgument("help"):
     print agent_host.getUsage()
     exit(0)
+    
+agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
+agent_host.setVideoPolicy(MalmoPython.VideoPolicy.LATEST_FRAME_ONLY)
+
 
 # -- set up the mission -- #
 mission_file = './mission_setup.xml'
@@ -70,15 +74,15 @@ world_state = agent_host.getWorldState()
 while not world_state.has_mission_begun:
     sys.stdout.write(".")
     time.sleep(0.1)
-    world_statels = agent_host.getWorldState()
+    world_state = agent_host.getWorldState()
     for error in world_state.errors:
         print "Error:",error.text
 print "Mission running ",
 
-# Loop until mission ends:
+#Loop until mission ends:
 while world_state.is_mission_running:
-    #sys.stdout.write(".")
-    #print agent_host.getWorldState() 
+    sys.stdout.write(".")
+    print world_state.video_frames[0].pixels
     #agent_host.sendCommand("move 1")
     #agent_host.sendCommand("jump 1")
     time.sleep(0.01)
