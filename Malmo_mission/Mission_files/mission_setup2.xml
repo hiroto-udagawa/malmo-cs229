@@ -18,7 +18,7 @@
 				<!-- coordinates for cuboid are inclusive -->
 				<DrawCuboid x1="-15" y1="47" z1="-15" x2="15" y2="70" z2="15" type="air" />
 				
-				<DrawCuboid x1="-15" y1="46" z1="-15" x2="15" y2="46" z2="15" type="glowstone" /> 
+				<DrawCuboid x1="-15" y1="46" z1="-15" x2="15" y2="46" z2="15" type="cobblestone" /> 
 				<DrawLine x1="-15" y1="47" z1="-14" x2="15" y2="52" z2="-14" type="torch" /> 
 				
 				<DrawBlock x="-10" y="46" z="0" type="mob_spawner" variant="Zombie"/>

@@ -23,13 +23,16 @@ import MalmoPython
 import os
 import sys
 import time
+
+sys.path.append("functions/.")
+from DeepAgent import DeepAgent
+
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
-# More interesting generator string: "3;7,44*49,73,35:1,159:4,95:13,35:13,159:11,95:10,159:14,159:6,35:6,95:6;12;"
-
 # Create default Malmo objects:
-
+agent = DeepAgent()
 agent_host = MalmoPython.AgentHost()
+print agent.actions
 try:
     agent_host.parse( sys.argv )
 except RuntimeError as e:
@@ -67,16 +70,13 @@ world_state = agent_host.getWorldState()
 while not world_state.has_mission_begun:
     sys.stdout.write(".")
     time.sleep(0.1)
-    world_state = agent_host.getWorldState()
+    world_statels = agent_host.getWorldState()
     for error in world_state.errors:
         print "Error:",error.text
-
-print
 print "Mission running ",
 
 # Loop until mission ends:
 while world_state.is_mission_running:
-    print(world_state.video_frames[0].pixels)
     #sys.stdout.write(".")
     #print agent_host.getWorldState() 
     #agent_host.sendCommand("move 1")
