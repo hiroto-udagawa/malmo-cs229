@@ -4,6 +4,7 @@ import os
 import random
 import sys
 import time
+import numpy as np
 
 class DeepAgent:
     """Tabular Q-learning agent for discrete state/action spaces."""
@@ -35,6 +36,27 @@ class DeepAgent:
         self.currentHealth = ob[u'Life']
         self.kills = ob[u'MobsKilled']
         return reward
-         
 
-                
+    def getPixels(frame):                                    
+        '''
+	Retrieves pixels from the frame object
+	'''
+	width = frame.width                                
+        height = frame.height                              
+        channels = frame.channels                          
+        pixels = np.array(frame.pixels, dtype = int)       
+        img = np.reshape(pixels, (width, height, channels))
+        #height = 640                                      
+        #width = 480                                       
+        return (img[:,:,0]+ img[:,:,1]+ img[:,:,2])/3      
+                                                           
+    def resize(image):
+	'''
+	Resizes the image to 80 by 80, works only if the dimensions are
+	multiples of 80
+	'''                                 
+        dim1 = image.shape[0]                              
+        dim2 = image.shape[1]                              
+        stride1 = dim1 / 80                                
+        stride2 = dim2 / 80                                
+        return image[::stride1, ::stride2]
