@@ -29,6 +29,7 @@ sys.path.append("functions/.")
 from DeepAgent import DeepAgent
 from deep_q import  DeepLearner
 import tensorflow as tf
+from Pixels import getPixels
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -47,7 +48,6 @@ if agent_host.receivedArgument("help"):
 agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
 agent_host.setVideoPolicy(MalmoPython.VideoPolicy.LATEST_FRAME_ONLY)
 
-
 # -- set up the mission -- #
 mission_file = './mission_setup.xml'
 with open(mission_file, 'r') as f:
@@ -57,10 +57,9 @@ with open(mission_file, 'r') as f:
 my_mission_record = MalmoPython.MissionRecordSpec()
 
 
-sess = tf.InteractiveSession()
 deep_learner = DeepLearner()
-
-num_repeats=1
+first = True
+num_repeats = 100
 for i in xrange(num_repeats):
     cum_reward = 0
     agent = DeepAgent()
@@ -95,15 +94,18 @@ for i in xrange(num_repeats):
     while world_state.is_mission_running:
         sys.stdout.write(".")
         time.sleep(0.1)
-        #print world_state.video_frames[0]
         if len(world_state.observations) > 0:
-            ob = json.loads(world_state.observations[-1].text)
-            print ob
-            print "Rewards: " , agent.getReward(ob)
-            print ob[u'IsAlive']
-            cum_reward += agent.getReward(ob)
-        
-    
+            if first == True:   
+                ob = json.loads(world_state.observations[-1].text)
+                pixels = getPixels(world_state.video_frames[0]) 
+                deep_learner.initNetwork(pixels, ob)
+                #print ob
+                first = False
+            else:
+                ob = json.loads(world_state.observations[-1].text)
+                pixels = getPixels(world_state.video_frames[0]) 
+                deep_learner.trainNetwork(pixels, ob)
+                #print ob    
     
         agent_host.sendCommand("move 1")
         #agent_host.sendCommand("jump 1")
