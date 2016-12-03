@@ -1,4 +1,4 @@
-# ------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
 # Copyright (c) 2016 Microsoft Corporation
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -23,10 +23,12 @@ import MalmoPython
 import os
 import sys
 import time
+import numpy as np
 import json
 import random
 sys.path.append("functions/.")
 from DeepAgent import DeepAgent
+from Pixels import getPixels
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -75,6 +77,7 @@ for i in xrange(num_repeats):
                 exit(1)
             else:
                 time.sleep(2)
+
 
     # Loop until mission starts:
     print "Waiting for the mission to start ",
