@@ -23,13 +23,9 @@ import MalmoPython
 import os
 import sys
 import time
-<<<<<<< HEAD:Malmo_mission/Mission_files/mission.py
 import numpy as np
-
-=======
 import json
 import random
->>>>>>> origin/master:Mission_files/mission_eval.py
 sys.path.append("functions/.")
 from DeepAgent import DeepAgent
 from Pixels import getPixels
