@@ -8,7 +8,7 @@
 	<ServerSection>
 		<ServerInitialConditions>
       <Time>
-          <StartTime>16000</StartTime>
+          <StartTime>13500</StartTime>
           <AllowPassageOfTime>false</AllowPassageOfTime>
       </Time>
 		</ServerInitialConditions>
@@ -28,7 +28,7 @@
 	<AgentSection mode="Survival">
 		<Name>Cristina</Name>
 		<AgentStart>
-      <Placement x="0" y="207.0" z="-14" pitch="20" yaw="0"/>
+      <Placement x="0" y="207.5" z="-14" pitch="20" yaw="0"/>
 			<Inventory>
 				<InventoryItem slot="0" type="iron_sword"/>
 			</Inventory>
@@ -39,9 +39,6 @@
           <Height>480</Height>
       </VideoProducer>
 			<ContinuousMovementCommands />
-      <ObservationFromNearbyEntities>
-          <Range name="entities" xrange="2" yrange="2" zrange="2" />
-      </ObservationFromNearbyEntities>
 			<ObservationFromFullStats/>
 			<RewardForSendingCommand reward="-1" />
 		</AgentHandlers>

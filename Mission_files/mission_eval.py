@@ -23,8 +23,13 @@ import MalmoPython
 import os
 import sys
 import time
+<<<<<<< HEAD:Malmo_mission/Mission_files/mission.py
 import numpy as np
 
+=======
+import json
+import random
+>>>>>>> origin/master:Mission_files/mission_eval.py
 sys.path.append("functions/.")
 from DeepAgent import DeepAgent
 from Pixels import getPixels
@@ -32,9 +37,7 @@ from Pixels import getPixels
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
 # Create default Malmo objects:
-agent = DeepAgent()
 agent_host = MalmoPython.AgentHost()
-print agent.actions
 try:
     agent_host.parse( sys.argv )
 except RuntimeError as e:
@@ -56,55 +59,63 @@ with open(mission_file, 'r') as f:
     mission_xml = f.read()
     my_mission = MalmoPython.MissionSpec(mission_xml, True)
 my_mission_record = MalmoPython.MissionRecordSpec()
+#for i in my_mission.getAllowedCommands(0,'AbsoluteMovementCommands'):
+#    print i
 
+num_repeats=1
+for i in xrange(num_repeats):
+    cum_reward = 0
+    agent = DeepAgent()
+
+    print
+    print 'Repeat %d of %d' % ( i+1, num_repeats )
 # Attempt to start a mission:
-max_retries = 3
-for retry in range(max_retries):
-    try:
-        agent_host.startMission( my_mission, my_mission_record )
-        break
-    except RuntimeError as e:
-        if retry == max_retries - 1:
-            print "Error starting mission:",e
-            exit(1)
-        else:
-            time.sleep(2)
+    max_retries = 3
+    for retry in range(max_retries):
+        try:
+            agent_host.startMission( my_mission, my_mission_record )
+            break
+        except RuntimeError as e:
+            if retry == max_retries - 1:
+                print "Error starting mission:",e
+                exit(1)
+            else:
+                time.sleep(2)
 
-# Loop until mission starts:
-print "Waiting for the mission to start ",
-world_state = agent_host.getWorldState()
-while not world_state.has_mission_begun:
-    sys.stdout.write(".")
-    time.sleep(0.1)
+
+    # Loop until mission starts:
+    print "Waiting for the mission to start ",
     world_state = agent_host.getWorldState()
-    for error in world_state.errors:
-        print "Error:",error.text
-print "Mission running ",
+    while not world_state.has_mission_begun:
+        sys.stdout.write(".")
+        time.sleep(0.1)
+        world_state = agent_host.getWorldState()
+        for error in world_state.errors:
+            print "Error:",error.text
+    print "Mission running ",
 
-sleep_time = 0.25
-count = 0
-got_image = False
-#Loop until mission ends:
-while world_state.is_mission_running:
-    sys.stdout.write(".")
-    print world_state  
-    if len(world_state.video_frames) > 0:
-	pixels = getPixels(world_state.video_frames[0]) 
-	print pixels.shape
-	np.save("image", pixels)
-	got_image = True  
-    else: 
-	print "received no frame"
-
-    time.sleep(sleep_time)
-    world_state = agent_host.getWorldState()
-    for error in world_state.errors:
-        print "Error:",error.text
-   
-    if got_image:
-	break
-    count += 1
-	
+    #Loop until mission ends:
+    while world_state.is_mission_running:
+        sys.stdout.write(".")
+        time.sleep(0.1)
+        #print world_state.video_frames[0]
+        if len(world_state.observations) > 0:
+            ob = json.loads(world_state.observations[-1].text)
+            print ob
+            print "Rewards: " , agent.getReward(ob)
+            print ob[u'IsAlive']
+            cum_reward += agent.getReward(ob)
+        
+    
+    
+        agent_host.sendCommand("move 1")
+        #agent_host.sendCommand("jump 1")
+        world_state = agent_host.getWorldState()
+        for error in world_state.errors:
+            print "Error:",error.text
+            
+    print "We scored " + str(cum_reward)
+    
 print
 print "Mission ended"
 # Mission has ended.
