@@ -11,15 +11,6 @@ class DeepAgent:
 
     def __init__(self):
         self.cum_reward = 0
-        self.epsilon = 0.01 # chance of taking a random action instead of the best
-
-        self.logger = logging.getLogger(__name__)
-        if False: # True if you want to see more information
-            self.logger.setLevel(logging.DEBUG)
-        else:
-            self.logger.setLevel(logging.INFO)
-        self.logger.handlers = []
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
 
         #self.actions = ["move 1", "move 0", "move -1", "turn -1", "turn 1", "turn 0", "attack 1", "attack 0"]
         self.actions = ["move 1",  "move -1", "turn -1", "turn 1", "move 0"]  
@@ -47,7 +38,7 @@ class DeepAgent:
         height = frame.height                              
         channels = frame.channels                          
         pixels = np.array(frame.pixels, dtype = int)       
-        img = np.reshape(pixels, (width, height, channels))
+        img = np.reshape(pixels, (height, width, channels))
                               
         return (img[:,:,0]+ img[:,:,1]+ img[:,:,2])/3      
                                                            

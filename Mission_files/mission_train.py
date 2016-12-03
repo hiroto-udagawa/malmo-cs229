@@ -29,7 +29,7 @@ sys.path.append("functions/.")
 from DeepAgent import DeepAgent
 from deep_q import  DeepLearner
 import tensorflow as tf
-from Pixels import getPixels
+import matplotlib.pyplot as plt
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -97,19 +97,23 @@ for i in xrange(num_repeats):
         time.sleep(0.05)
         agent_host.sendCommand(deep_learner.agent.antiActions[action])  
         #time.sleep(0.05)
-        if len(world_state.observations) > 0 and len(world_state.video_frames)>0:
+        if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
             if first == True:   
                 ob = json.loads(world_state.observations[-1].text)
-                pixels = world_state.video_frames[0]
-                action = deep_learner.initNetwork(pixels, ob)
+                print ob
+                frame = world_state.video_frames[0]
+                
+                action = deep_learner.initNetwork(frame, ob)
                 print action
                 agent_host.sendCommand(deep_learner.agent.actions[action])
                 #print ob
                 first = False
             else:
                 ob = json.loads(world_state.observations[-1].text)
-                pixels = world_state.video_frames[0]
-                action = deep_learner.trainNetwork(pixels, ob)
+                frame = world_state.video_frames[0]
+                action = deep_learner.trainNetwork(frame, ob)
+                plt.imshow(deep_learner.agent.getPixels(frame))
+                plt.show()
                 print action
                 if not ob[u'IsAlive']:
                     print ob[u'IsAlive']
