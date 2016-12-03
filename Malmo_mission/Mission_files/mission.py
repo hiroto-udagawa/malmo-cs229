@@ -1,4 +1,4 @@
-# ------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------
 # Copyright (c) 2016 Microsoft Corporation
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -23,9 +23,11 @@ import MalmoPython
 import os
 import sys
 import time
+import numpy as np
 
 sys.path.append("functions/.")
 from DeepAgent import DeepAgent
+from Pixels import getPixels
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -79,17 +81,30 @@ while not world_state.has_mission_begun:
         print "Error:",error.text
 print "Mission running ",
 
+sleep_time = 0.25
+count = 0
+got_image = False
 #Loop until mission ends:
 while world_state.is_mission_running:
     sys.stdout.write(".")
-    print world_state.video_frames[0].pixels
-    #agent_host.sendCommand("move 1")
-    #agent_host.sendCommand("jump 1")
-    time.sleep(0.01)
+    print world_state  
+    if len(world_state.video_frames) > 0:
+	pixels = getPixels(world_state.video_frames[0]) 
+	print pixels.shape
+	np.save("image", pixels)
+	got_image = True  
+    else: 
+	print "received no frame"
+
+    time.sleep(sleep_time)
     world_state = agent_host.getWorldState()
     for error in world_state.errors:
         print "Error:",error.text
-
+   
+    if got_image:
+	break
+    count += 1
+	
 print
 print "Mission ended"
 # Mission has ended.
