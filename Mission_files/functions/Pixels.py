@@ -11,7 +11,13 @@ def getPixels( frame ):
         #width = 480
         return (img[:,:,0]+ img[:,:,1]+ img[:,:,2])/3
 
-
+def resize_to_80( image ):
+	
+	dim1 = image.shape[0]
+	dim2 = image.shape[1]
+	stride1 = dim1 / 80 
+	stride2 = dim2 / 80
+	return image[::stride1, ::stride2]
 
 # sleep_time = 0.25
 # count = 0
