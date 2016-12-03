@@ -112,7 +112,7 @@ class DeepLearner:
         do_nothing = np.zeros(ACTIONS)
         do_nothing[0] = 1
         #x_t = frame
-        x_t = np.resize(frame, (80,80))
+        x_t = self.agent.resize( self.agent.getPixels(frame))
         r_0 = self.agent.getReward(ob)
         terminal = ob[u'IsAlive']    
         s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
@@ -154,7 +154,8 @@ class DeepLearner:
 
         # run the selected action and observe next state and reward
         #x_t1 = np.reshape(frame, ( 640,480,1) )
-        x_t1 = np.resize(frame, (80,80,1) )
+        x_t1 = self.agent.resize( self.agent.getPixels(frame))
+        x_t1 = x_t1.reshape(80,80,1)
         
         r_t = self.agent.getReward(ob)
         terminal = ob[u'IsAlive']

@@ -29,9 +29,9 @@
 	<AgentSection mode="Survival">
 		<Name>Cristina</Name>
 		<AgentStart>
-      <Placement x="0" y="207.5" z="-14" pitch="20" yaw="0"/>
+      <Placement x="0" y="207" z="-12" pitch="20" yaw="0"/>
 			<Inventory>
-				<InventoryItem slot="0" type="iron_sword"/>
+				<InventoryItem slot="0" type="diamond_sword"/>
 			</Inventory>
 		</AgentStart>
 		<AgentHandlers>

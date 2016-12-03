@@ -100,7 +100,7 @@ for i in xrange(num_repeats):
         if len(world_state.observations) > 0 and len(world_state.video_frames)>0:
             if first == True:   
                 ob = json.loads(world_state.observations[-1].text)
-                pixels = getPixels(world_state.video_frames[0]) 
+                pixels = world_state.video_frames[0]
                 action = deep_learner.initNetwork(pixels, ob)
                 print action
                 agent_host.sendCommand(deep_learner.agent.actions[action])
@@ -108,22 +108,20 @@ for i in xrange(num_repeats):
                 first = False
             else:
                 ob = json.loads(world_state.observations[-1].text)
-                pixels = getPixels(world_state.video_frames[0]) 
+                pixels = world_state.video_frames[0]
                 action = deep_learner.trainNetwork(pixels, ob)
                 print action
                 if not ob[u'IsAlive']:
                     print ob[u'IsAlive']
-                print "Reward is: " + str(deep_learner.agent.getReward(ob))
-                cum_reward += deep_learner.agent.getReward(ob)
                 agent_host.sendCommand(deep_learner.agent.actions[action])
-                print ob    
+                #print ob    
     
         #agent_host.sendCommand("jump 1")
         world_state = agent_host.getWorldState()
         for error in world_state.errors:
             print "Error:",error.text
             
-    print "We scored " + str(cum_reward)
+    print "We scored " + str(deep_learner.agent.cum_reward)
     print "We Killed " + str(deep_learner.agent.kills - kills)
     kills = deep_learner.agent.kills
     
