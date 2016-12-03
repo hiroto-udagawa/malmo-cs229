@@ -19,9 +19,10 @@ class DeepAgent:
         self.logger.handlers = []
         self.logger.addHandler(logging.StreamHandler(sys.stdout))
 
-        self.actions = ["move 1", "move 0", "move -1", "turn -1", "turn 1", "turn 0", "attack 1", "attack 0"]
-        self.rewards = {"health":-5 , "kills":20, "time":0.1}
-        self.q_table = {}
+        #self.actions = ["move 1", "move 0", "move -1", "turn -1", "turn 1", "turn 0", "attack 1", "attack 0"]
+        self.actions = ["move 1",  "move -1", "turn -1", "turn 1"]  
+        self.antiActions = ["move 0", "move 0", "turn 0", "turn 0"]
+        self.rewards = {"health":-5 , "kills":40, "time":0.1}
         self.currentHealth = 20
         self.kills = 0
         
@@ -30,7 +31,7 @@ class DeepAgent:
         reward += (ob[u'MobsKilled'] - self.kills) * self.rewards['kills']
         reward += (self.currentHealth - ob[u'Life']) * self.rewards["health"]
         reward += self.rewards["time"]
-               
+        print self.currentHealth, "    ", ob[u'Life']
         self.currentHealth = ob[u'Life']
         self.kills = ob[u'MobsKilled']
         return reward

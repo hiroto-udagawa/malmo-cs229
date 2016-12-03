@@ -4,24 +4,25 @@ import numpy as np
 import random
 from DeepAgent import DeepAgent
 
-image_width = 480
-image_height = 640       
+# image_width = 480
+# image_height = 640
+image_width = 80
+image_height = 80
 sess = tf.InteractiveSession()
-pixels = image_width * image_height
+PIXELS = image_width * image_height
 neurons = 1024
 first_layer_filter = 32
 layer_size = 5
 second_layer_filter = 64
 
-ACTIONS = 10
+ACTIONS = 4
 GAMMA = 0.99 # decay rate of past observations
-#OBSERVE = 100000. # timesteps to observe before training
-OBSERVE = 32. # timesteps to observe before training
+OBSERVE = 1000. # timesteps to observe before training
+#OBSERVE = 32. # timesteps to observe before training
 EXPLORE = 2000000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.0001 # final value of epsilon
-INITIAL_EPSILON = 0.0001 # starting value of epsilon
+INITIAL_EPSILON = 0.1 # starting value of epsilon
 REPLAY_MEMORY = 50000 # number of previous transitions to remember
-#BATCH = 32 # size of minibatch
 BATCH = 32 # size of minibatch
 FRAME_PER_ACTION=1
 FRAMES= 4
@@ -34,7 +35,7 @@ class DeepLearner:
         self.D = deque()
         
         self.s, self.readout, h_fc1  = self.createNet();
-        self.train_step = self.s_t = self.y = self.a =  None
+        self.train_step = self.s_t = self.y = self.a = self.a_t = None
         self.epsilon = INITIAL_EPSILON
         self.t = 0
           
@@ -110,12 +111,10 @@ class DeepLearner:
         # get the first state by doing nothing and preprocess the image to 80x80x4
         do_nothing = np.zeros(ACTIONS)
         do_nothing[0] = 1
-        x_t = frame
+        #x_t = frame
+        x_t = np.resize(frame, (80,80))
         r_0 = self.agent.getReward(ob)
         terminal = ob[u'IsAlive']    
-        # x_t, r_0, terminal = game_state.frame_step(do_nothing)
-        # x_t = cv2.cvtColor(cv2.resize(x_t, (80, 80)), cv2.COLOR_BGR2GRAY)
-        # ret, x_t = cv2.threshold(x_t,1,255,cv2.THRESH_BINARY)
         s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
 
         # saving and loading networks
@@ -132,30 +131,31 @@ class DeepLearner:
         self.y = y
         self.train_step = train_step
         self.s_t = s_t
-    
-    def trainNetwork(self, frame, ob):
-    # start training
-        # choose an action epsilon greedily
+        
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
         a_t = np.zeros([ACTIONS])
         action_index = 0
-        if self.t % FRAME_PER_ACTION == 0:
-            if random.random() <= self.epsilon:
-                print("----------Random Action----------")
-                action_index = random.randrange(ACTIONS)
-                a_t[random.randrange(ACTIONS)] = 1
-            else:
-                action_index = np.argmax(readout_t)
-                a_t[action_index] = 1
+        if random.random() <= self.epsilon:
+        #if True:
+            print("----------Random Action----------")
+            action_index = random.randrange(ACTIONS)
+            a_t[random.randrange(ACTIONS)] = 1
         else:
-            a_t[0] = 1 # do nothing
+            action_index = np.argmax(readout_t)
+            a_t[action_index] = 1
+        self.a_t = a_t
+        return action_index
 
+    
+    def trainNetwork(self, frame, ob):
         # scale down epsilon
-        if self.epsilon > FINAL_EPSILON and t > OBSERVE:
+        if self.epsilon > FINAL_EPSILON and self.t > OBSERVE:
             self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
 
         # run the selected action and observe next state and reward
-        x_t1 = np.reshape(frame, ( 640,480,1) )
+        #x_t1 = np.reshape(frame, ( 640,480,1) )
+        x_t1 = np.resize(frame, (80,80,1) )
+        
         r_t = self.agent.getReward(ob)
         terminal = ob[u'IsAlive']
         #s_t1 = np.append(x_t1, s_t[:,:,1:], axis = 2)
@@ -163,7 +163,7 @@ class DeepLearner:
         s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
 
         # store the transition in D
-        self.D.append((self.s_t, a_t, r_t, s_t1, terminal))
+        self.D.append((self.s_t, self.a_t, r_t, s_t1, terminal))
         if len(self.D) > REPLAY_MEMORY:
             self.D.popleft()
 
@@ -187,10 +187,7 @@ class DeepLearner:
                     y_batch.append(r_batch[i])
                 else:
                     y_batch.append(r_batch[i] + GAMMA * np.max(readout_j1_batch[i]))
-                    
-            m = np.array(s_j_batch)
-            print m.shape
-            
+                               
             # perform gradient step
             self.train_step.run(feed_dict = {
                 self.y : y_batch,
@@ -206,6 +203,17 @@ class DeepLearner:
         if self.t % 10000 == 0:
             saver.save(sess, 'saved_networks/' + GAME + '-dqn', global_step = t)
 
+        readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
+        self.a_t = np.zeros([ACTIONS])
+        action_index = 0
+        if random.random() <= self.epsilon:
+            print("----------Random Action----------")
+            action_index = random.randrange(ACTIONS)
+            self.a_t[random.randrange(ACTIONS)] = 1
+        else:
+            action_index = np.argmax(readout_t)
+            self.a_t[action_index] = 1
+            
         # print info
         state = ""
         if self.t <= OBSERVE:
@@ -216,7 +224,7 @@ class DeepLearner:
             state = "train"
 
         print("TIMESTEP", self.t, "/ STATE", state, \
-            "/ EPSILON", self.epsilon, "/ ACTION", action_index, "/ REWARD", r_t, \
+            "/ EPSILON", self.epsilon, "/ ACTION", self.a_t, "/ REWARD", r_t, \
             "/ Q_MAX %e" % np.max(readout_t))
         # write info to files
         '''
@@ -225,3 +233,5 @@ class DeepLearner:
             h_file.write(",".join([str(x) for x in h_fc1.eval(feed_dict={s:[s_t]})[0]]) + '\n')
             cv2.imwrite("logs_tetris/frame" + str(t) + ".png", x_t1)
         '''
+        
+        return action_index

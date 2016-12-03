@@ -7,6 +7,7 @@
 
 	<ServerSection>
 		<ServerInitialConditions>
+			<Weather>clear</Weather>
       <Time>
           <StartTime>13500</StartTime>
           <AllowPassageOfTime>false</AllowPassageOfTime>
@@ -17,7 +18,7 @@
 			<DrawingDecorator>
         <DrawCuboid x1="-15" y1="206" z1="-15" x2="15" y2="226" z2="15" type="stone"/>
         <DrawCuboid x1="-14" y1="207" z1="-14" x2="14" y2="226" z2="14" type="air"/>								
-				<DrawLine x1="-8" y1="206" z1="2" x2="10" y2="206" z2="2" type="mob_spawner" variant="Zombie"/>  
+				<DrawLine x1="-3" y1="206" z1="-2" x2="3" y2="206" z2="-2" type="mob_spawner" variant="Zombie"/>  
 				
 			</DrawingDecorator>
 			<ServerQuitFromTimeUp timeLimitMs="100000"/>
