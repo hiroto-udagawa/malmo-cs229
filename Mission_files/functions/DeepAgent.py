@@ -1,11 +1,9 @@
-import MalmoPython
 import json
 import logging
 import os
 import random
 import sys
 import time
-import Tkinter as tk
 
 class DeepAgent:
     """Tabular Q-learning agent for discrete state/action spaces."""

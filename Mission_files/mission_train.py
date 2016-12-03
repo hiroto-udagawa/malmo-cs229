@@ -27,7 +27,7 @@ import json
 import random
 sys.path.append("functions/.")
 from DeepAgent import DeepAgent
-from deep_q import createNet, initNetwork
+from deep_q import  DeepLearner
 import tensorflow as tf
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
@@ -58,8 +58,8 @@ my_mission_record = MalmoPython.MissionRecordSpec()
 
 
 sess = tf.InteractiveSession()
-s, readout, h_fc1 = createNet()
-initNetwork(s,readout,sess)
+deep_learner = DeepLearner()
+
 num_repeats=1
 for i in xrange(num_repeats):
     cum_reward = 0
