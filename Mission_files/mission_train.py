@@ -100,9 +100,7 @@ for i in xrange(num_repeats):
         if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
             if first == True:   
                 ob = json.loads(world_state.observations[-1].text)
-                print ob
-                frame = world_state.video_frames[0]
-                
+                frame = world_state.video_frames[0]                
                 action = deep_learner.initNetwork(frame, ob)
                 print action
                 agent_host.sendCommand(deep_learner.agent.actions[action])
@@ -112,11 +110,7 @@ for i in xrange(num_repeats):
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]
                 action = deep_learner.trainNetwork(frame, ob)
-                plt.imshow(deep_learner.agent.getPixels(frame))
-                plt.show()
                 print action
-                if not ob[u'IsAlive']:
-                    print ob[u'IsAlive']
                 agent_host.sendCommand(deep_learner.agent.actions[action])
                 #print ob    
     
