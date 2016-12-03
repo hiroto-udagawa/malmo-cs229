@@ -29,6 +29,7 @@ sys.path.append("functions/.")
 from DeepAgent import DeepAgent
 from deep_q import  DeepLearner
 import tensorflow as tf
+from Pixels import getPixels
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -47,7 +48,6 @@ if agent_host.receivedArgument("help"):
 agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
 agent_host.setVideoPolicy(MalmoPython.VideoPolicy.LATEST_FRAME_ONLY)
 
-
 # -- set up the mission -- #
 mission_file = './mission_setup.xml'
 with open(mission_file, 'r') as f:
@@ -56,15 +56,14 @@ with open(mission_file, 'r') as f:
     my_mission = MalmoPython.MissionSpec(mission_xml, True)
 my_mission_record = MalmoPython.MissionRecordSpec()
 
-
-sess = tf.InteractiveSession()
 deep_learner = DeepLearner()
-
-num_repeats=1
+first = True
+num_repeats = 100
+kills = 0
 for i in xrange(num_repeats):
     cum_reward = 0
-    agent = DeepAgent()
-
+    deep_learner.agent = DeepAgent()
+    deep_learner.agent.kills = kills
     print
     print 'Repeat %d of %d' % ( i+1, num_repeats )
 # Attempt to start a mission:
@@ -90,28 +89,41 @@ for i in xrange(num_repeats):
         for error in world_state.errors:
             print "Error:",error.text
     print "Mission running ",
-
+    action = 0
     #Loop until mission ends:
     while world_state.is_mission_running:
+        agent_host.sendCommand("attack 1")
         sys.stdout.write(".")
-        time.sleep(0.1)
-        #print world_state.video_frames[0]
-        if len(world_state.observations) > 0:
-            ob = json.loads(world_state.observations[-1].text)
-            print ob
-            print "Rewards: " , agent.getReward(ob)
-            print ob[u'IsAlive']
-            cum_reward += agent.getReward(ob)
-        
+        time.sleep(0.05)
+        agent_host.sendCommand(deep_learner.agent.antiActions[action])  
+        #time.sleep(0.05)
+        if len(world_state.observations) > 0 and len(world_state.video_frames)>0:
+            if first == True:   
+                ob = json.loads(world_state.observations[-1].text)
+                pixels = world_state.video_frames[0]
+                action = deep_learner.initNetwork(pixels, ob)
+                print action
+                agent_host.sendCommand(deep_learner.agent.actions[action])
+                #print ob
+                first = False
+            else:
+                ob = json.loads(world_state.observations[-1].text)
+                pixels = world_state.video_frames[0]
+                action = deep_learner.trainNetwork(pixels, ob)
+                print action
+                if not ob[u'IsAlive']:
+                    print ob[u'IsAlive']
+                agent_host.sendCommand(deep_learner.agent.actions[action])
+                #print ob    
     
-    
-        agent_host.sendCommand("move 1")
         #agent_host.sendCommand("jump 1")
         world_state = agent_host.getWorldState()
         for error in world_state.errors:
             print "Error:",error.text
             
-    print "We scored " + str(cum_reward)
+    print "We scored " + str(deep_learner.agent.cum_reward)
+    print "We Killed " + str(deep_learner.agent.kills - kills)
+    kills = deep_learner.agent.kills
     
 print
 print "Mission ended"
