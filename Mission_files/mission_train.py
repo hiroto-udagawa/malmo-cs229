@@ -94,7 +94,6 @@ for i in xrange(num_repeats):
         agent_host.sendCommand("attack 1")
         sys.stdout.write(".")
         time.sleep(0.05)
-        agent_host.sendCommand(deep_learner.agent.antiActions[action])  
         #time.sleep(0.05)
         if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
             if first == True:   
@@ -108,8 +107,9 @@ for i in xrange(num_repeats):
             else:
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]
+                prev_action = action
                 action = deep_learner.trainNetwork(frame, ob)
-                print action
+                agent_host.sendCommand(deep_learner.agent.antiActions[prev_action]) 
                 agent_host.sendCommand(deep_learner.agent.actions[action])
                 #print ob    
     
