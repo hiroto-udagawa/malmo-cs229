@@ -29,7 +29,6 @@ sys.path.append("functions/.")
 from DeepAgent import DeepAgent
 from deep_q import  DeepLearner
 import tensorflow as tf
-import matplotlib.pyplot as plt
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -58,7 +57,7 @@ my_mission_record = MalmoPython.MissionRecordSpec()
 
 deep_learner = DeepLearner()
 first = True
-num_repeats = 100
+num_repeats = 10000
 kills = 0
 for i in xrange(num_repeats):
     cum_reward = 0
