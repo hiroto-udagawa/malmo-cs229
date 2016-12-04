@@ -3,6 +3,7 @@ from collections import deque
 import numpy as np
 import random
 from DeepAgent import DeepAgent
+import cv2
 
 # image_width = 480
 # image_height = 640
@@ -17,12 +18,12 @@ second_layer_filter = 64
 
 ACTIONS = 4
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 1000. # timesteps to observe before training
+OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 32. # timesteps to observe before training
 EXPLORE = 2000000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.0001 # final value of epsilon
 INITIAL_EPSILON = 0.1 # starting value of epsilon
-REPLAY_MEMORY = 50000 # number of previous transitions to remember
+REPLAY_MEMORY = 10000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
 FRAME_PER_ACTION=1
 FRAMES= 4
@@ -38,6 +39,7 @@ class DeepLearner:
         self.train_step = self.s_t = self.y = self.a = self.a_t = None
         self.epsilon = INITIAL_EPSILON
         self.t = 0
+        self.saver = None
           
     def weight_variable(self, shape):
       initial = tf.truncated_normal(shape, stddev=0.1)
@@ -118,11 +120,11 @@ class DeepLearner:
         s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
 
         # saving and loading networks
-        saver = tf.train.Saver()
+        self.saver = tf.train.Saver()
         self.sess.run(tf.initialize_all_variables())
         checkpoint = tf.train.get_checkpoint_state("networks")
         if checkpoint and checkpoint.model_checkpoint_path:
-            saver.restore(sess, checkpoint.model_checkpoint_path)
+            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
             print("Successfully loaded:", checkpoint.model_checkpoint_path)
         else:
             print("Could not find old network weights")
@@ -155,6 +157,7 @@ class DeepLearner:
         # run the selected action and observe next state and reward
         #x_t1 = np.reshape(frame, ( 640,480,1) )
         x_t1 = self.agent.resize( self.agent.getPixels(frame))
+        cv2.imwrite('messigray.png',x_t1)
         x_t1 = x_t1.reshape(80,80,1)
         
         r_t = self.agent.getReward(ob)
@@ -202,7 +205,7 @@ class DeepLearner:
 
         # save progress every 10000 iterations
         if self.t % 10000 == 0:
-            saver.save(sess, 'saved_networks/' + GAME + '-dqn', global_step = t)
+            self.saver.save(self.sess, 'networks/zombie-dqn', global_step = self.t)
 
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
         self.a_t = np.zeros([ACTIONS])

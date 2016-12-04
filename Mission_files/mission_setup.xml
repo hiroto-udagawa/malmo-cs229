@@ -16,16 +16,15 @@
 		<ServerHandlers>
       <FlatWorldGenerator generatorString="3;7,220*1,5*3,2;3;dungeon" />
 			<DrawingDecorator>
-        <DrawCuboid x1="-15" y1="206" z1="-15" x2="15" y2="226" z2="15" type="stone"/>
-        <DrawCuboid x1="-14" y1="207" z1="-14" x2="14" y2="226" z2="14" type="air"/>								
-				<DrawLine x1="-3" y1="206" z1="-2" x2="3" y2="206" z2="-2" type="mob_spawner" variant="Zombie"/>  
+        <DrawCuboid x1="-30" y1="206" z1="-30" x2="30" y2="226" z2="30" type="stone"/>
+        <DrawCuboid x1="-29" y1="207" z1="-29" x2="29" y2="226" z2="29" type="air"/>								
+				<DrawLine x1="-1" y1="206" z1="-2" x2="1" y2="206" z2="-2" type="mob_spawner" variant="Zombie"/>  
 				
 			</DrawingDecorator>
 			<ServerQuitFromTimeUp timeLimitMs="100000"/>
 			<ServerQuitWhenAnyAgentFinishes/>
 		</ServerHandlers>
 	</ServerSection>
-
 	<AgentSection mode="Survival">
 		<Name>Cristina</Name>
 		<AgentStart>
