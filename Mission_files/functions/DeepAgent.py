@@ -55,5 +55,7 @@ class DeepAgent:
     	'''
         return cv2.cvtColor(cv2.resize(image, (80, 80)), cv2.COLOR_RGB2GRAY)
 	
-
-	
+    def threshold(self, image):
+        retval, th_image = cv2.threshold(image,1,255,cv2.THRESH_BINARY) 
+	#retval, th_image = cv2.threshold(image,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+	return th_image
