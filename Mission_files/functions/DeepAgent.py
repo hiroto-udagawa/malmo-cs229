@@ -36,24 +36,24 @@ class DeepAgent:
         width = frame.width                                
         height = frame.height                              
         channels = frame.channels                          
-        pixels = np.array(frame.pixels, dtype = int)       
+        pixels = np.array(frame.pixels, dtype = np.uint8)       
         img = np.reshape(pixels, (height, width, channels))
                               
-        return (img[:,:,0]+ img[:,:,1]+ img[:,:,2])/3      
+        return img      
                                                            
     def resize(self, image):
         '''
-        Resizes the image to 80 by 80, works only if the dimensions are
-        multiples of 80
-        '''         
-	'''                        
-        dim1 = image.shape[0]                              
-        dim2 = image.shape[1]                              
-        stride1 = dim1 / 80                                
-        stride2 = dim2 / 80                                
-        return image[::stride1, ::stride2]
-	'''
-	return cv2.cvtColor(cv2.resize(image, (80, 80)), cv2.COLOR_BGR2GRAY)
+            Resizes the image to 80 by 80, works only if the dimensions are
+            multiples of 80
+            '''         
+    	'''                        
+            dim1 = image.shape[0]                              
+            dim2 = image.shape[1]                              
+            stride1 = dim1 / 80                                
+            stride2 = dim2 / 80                                
+            return image[::stride1, ::stride2]
+    	'''
+        return cv2.cvtColor(cv2.resize(image, (80, 80)), cv2.COLOR_RGB2GRAY)
 	
 
 	

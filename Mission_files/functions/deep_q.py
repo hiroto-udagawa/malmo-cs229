@@ -3,6 +3,7 @@ from collections import deque
 import numpy as np
 import random
 from DeepAgent import DeepAgent
+import cv2
 
 # image_width = 480
 # image_height = 640
@@ -156,6 +157,7 @@ class DeepLearner:
         # run the selected action and observe next state and reward
         #x_t1 = np.reshape(frame, ( 640,480,1) )
         x_t1 = self.agent.resize( self.agent.getPixels(frame))
+        cv2.imwrite('messigray.png',x_t1)
         x_t1 = x_t1.reshape(80,80,1)
         
         r_t = self.agent.getReward(ob)
