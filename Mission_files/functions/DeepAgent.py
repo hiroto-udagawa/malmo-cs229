@@ -5,7 +5,7 @@ import random
 import sys
 import time
 import numpy as np
-
+import cv2
 class DeepAgent:
     """Tabular Q-learning agent for discrete state/action spaces."""
 
@@ -45,9 +45,15 @@ class DeepAgent:
         '''
         Resizes the image to 80 by 80, works only if the dimensions are
         multiples of 80
-        '''                                 
+        '''         
+	'''                        
         dim1 = image.shape[0]                              
         dim2 = image.shape[1]                              
         stride1 = dim1 / 80                                
         stride2 = dim2 / 80                                
         return image[::stride1, ::stride2]
+	'''
+	return cv2.cvtColor(cv2.resize(image, (80, 80)), cv2.COLOR_BGR2GRAY)
+	
+
+	
