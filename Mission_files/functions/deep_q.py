@@ -20,7 +20,7 @@ ACTIONS = 4
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 32. # timesteps to observe before training
-EXPLORE = 2000000. # frames over which to anneal epsilon
+EXPLORE = 100000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.0001 # final value of epsilon
 INITIAL_EPSILON = 0.1 # starting value of epsilon
 REPLAY_MEMORY = 10000 # number of previous transitions to remember
@@ -115,8 +115,13 @@ class DeepLearner:
         do_nothing[0] = 1
         #x_t = frame
         x_t = self.agent.resize( self.agent.getPixels(frame))
+        #x_t = self.agent.threshold(x_t)
+        x_t = x_t.reshape(80,80)
+        
         r_0 = self.agent.getReward(ob)
-        terminal = ob[u'IsAlive']    
+        #terminal = ob[u'IsAlive']    
+        terminal = False 
+        
         s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
 
         # saving and loading networks
@@ -152,16 +157,18 @@ class DeepLearner:
     def trainNetwork(self, frame, ob):
         # scale down epsilon
         if self.epsilon > FINAL_EPSILON and self.t > OBSERVE:
-            self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
+            self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / 100000
 
         # run the selected action and observe next state and reward
-        #x_t1 = np.reshape(frame, ( 640,480,1) )
         x_t1 = self.agent.resize( self.agent.getPixels(frame))
-        cv2.imwrite('messigray.png',x_t1)
+        #x_t1 = self.agent.threshold(x_t1)
+        #cv2.imwrite('messigray.png',x_t1)
         x_t1 = x_t1.reshape(80,80,1)
         
         r_t = self.agent.getReward(ob)
-        terminal = ob[u'IsAlive']
+        #terminal = ob[u'IsAlive']
+        terminal = False 
+        
         #s_t1 = np.append(x_t1, s_t[:,:,1:], axis = 2)
 
         s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
@@ -226,10 +233,10 @@ class DeepLearner:
             state = "explore"
         else:
             state = "train"
-
-        print("TIMESTEP", self.t, "/ STATE", state, \
-            "/ EPSILON", self.epsilon, "/ ACTION", self.a_t, "/ REWARD", r_t, \
-            "/ Q_MAX %e" % np.max(readout_t))
+        if self.t % 100 == 0:
+            print("TIMESTEP", self.t, "/ STATE", state, \
+                "/ EPSILON", self.epsilon, "/ ACTION", self.a_t, "/ REWARD", r_t, \
+                "/ Q_MAX %e" % np.max(readout_t))
         # write info to files
         '''
         if t % 10000 <= 100:

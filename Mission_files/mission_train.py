@@ -88,11 +88,9 @@ for i in xrange(num_repeats):
         for error in world_state.errors:
             print "Error:",error.text
     print "Mission running ",
-    action = 0
     #Loop until mission ends:
     while world_state.is_mission_running:
         agent_host.sendCommand("attack 1")
-        sys.stdout.write(".")
         time.sleep(0.05)
         #time.sleep(0.05)
         if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
@@ -100,9 +98,7 @@ for i in xrange(num_repeats):
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]                
                 action = deep_learner.initNetwork(frame, ob)
-                print action
                 agent_host.sendCommand(deep_learner.agent.actions[action])
-                #print ob
                 first = False
             else:
                 ob = json.loads(world_state.observations[-1].text)
@@ -110,8 +106,7 @@ for i in xrange(num_repeats):
                 prev_action = action
                 action = deep_learner.trainNetwork(frame, ob)
                 agent_host.sendCommand(deep_learner.agent.antiActions[prev_action]) 
-                agent_host.sendCommand(deep_learner.agent.actions[action])
-                #print ob    
+                agent_host.sendCommand(deep_learner.agent.actions[action])                
     
         #agent_host.sendCommand("jump 1")
         world_state = agent_host.getWorldState()
