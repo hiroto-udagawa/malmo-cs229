@@ -56,10 +56,12 @@ with open(mission_file, 'r') as f:
 my_mission_record = MalmoPython.MissionRecordSpec()
 
 deep_learner = DeepLearner()
-first = True
 num_repeats = 10000
 kills = 0
+
 for i in xrange(num_repeats):
+    prev_kills = kills
+    first = True
     cum_reward = 0
     deep_learner.agent = DeepAgent()
     deep_learner.agent.kills = kills
@@ -89,13 +91,19 @@ for i in xrange(num_repeats):
             print "Error:",error.text
     print "Mission running ",
     #Loop until mission ends:
+    
+    for i in xrange(-3, 0):
+        for j in xrange(-3,-1):
+            agent_host.sendCommand("chat /summon Zombie " + str(i) + " 207 " +  str(j) +  " {Equipment:[{},{},{},{},{id:minecraft:stone_button}]}")
+    agent_host.sendCommand("chat /gamerule doNaturalRegen false")
+    
+    
     while world_state.is_mission_running:
         agent_host.sendCommand("attack 1")
         time.sleep(0.05)
-        #time.sleep(0.05)
         if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
             if first == True:   
-                ob = json.loads(world_state.observations[-1].text)
+                ob = json.loads(world_state.observations[-1].text)                
                 frame = world_state.video_frames[0]                
                 action = deep_learner.initNetwork(frame, ob)
                 agent_host.sendCommand(deep_learner.agent.actions[action])
@@ -109,13 +117,16 @@ for i in xrange(num_repeats):
                 agent_host.sendCommand(deep_learner.agent.actions[action])                
     
         #agent_host.sendCommand("jump 1")
+            if "MobsKilled" in ob and ob[u'MobsKilled'] > kills:
+                agent_host.sendCommand("chat /summon Zombie -1 207 -3 {Equipment:[{},{},{},{},{id:minecraft:stone_button}]}")
+                kills = ob[u'MobsKilled']
+            
         world_state = agent_host.getWorldState()
         for error in world_state.errors:
             print "Error:",error.text
             
     print "We scored " + str(deep_learner.agent.cum_reward)
-    print "We Killed " + str(deep_learner.agent.kills - kills)
-    kills = deep_learner.agent.kills
+    print "We Killed " + str(kills - prev_kills)
     
 print
 print "Mission ended"

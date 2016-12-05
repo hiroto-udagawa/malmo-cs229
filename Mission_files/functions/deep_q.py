@@ -36,10 +36,25 @@ class DeepLearner:
         self.D = deque()
         
         self.s, self.readout, h_fc1  = self.createNet();
-        self.train_step = self.s_t = self.y = self.a = self.a_t = None
+        self.s_t = self.a_t = None
         self.epsilon = INITIAL_EPSILON
         self.t = 0
         self.saver = None
+        
+        self.a = tf.placeholder("float", [None, ACTIONS])
+        self.y = tf.placeholder("float", [None])
+        readout_action = tf.reduce_sum(tf.mul(self.readout, self.a), reduction_indices=1)
+        cost = tf.reduce_mean(tf.square(self.y - readout_action))
+        self.train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
+        
+        self.saver = tf.train.Saver()
+        self.sess.run(tf.initialize_all_variables())
+        checkpoint = tf.train.get_checkpoint_state("networks")
+        if checkpoint and checkpoint.model_checkpoint_path:
+            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
+            print("Successfully loaded:", checkpoint.model_checkpoint_path)
+        else:
+            print("Could not find old network weights")
           
     def weight_variable(self, shape):
       initial = tf.truncated_normal(shape, stddev=0.1)
@@ -96,24 +111,10 @@ class DeepLearner:
         return s, readout, h_fc1
 
     def initNetwork(self,frame, ob):
-        # define the cost function
-        a = tf.placeholder("float", [None, ACTIONS])
-        y = tf.placeholder("float", [None])
-        readout_action = tf.reduce_sum(tf.mul(self.readout, a), reduction_indices=1)
-        cost = tf.reduce_mean(tf.square(y - readout_action))
-        train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
-
-        # open up a game state to communicate with emulator
-        # store the previous observations in replay memory
-
         # printing
-        a_file = open("logs/readout.txt", 'w')
-        h_file = open("logs/hidden.txt", 'w')
+        #a_file = open("logs/readout.txt", 'w')
+        #h_file = open("logs/hidden.txt", 'w')
 
-        # get the first state by doing nothing and preprocess the image to 80x80x4
-        do_nothing = np.zeros(ACTIONS)
-        do_nothing[0] = 1
-        #x_t = frame
         x_t = self.agent.resize( self.agent.getPixels(frame))
         #x_t = self.agent.threshold(x_t)
         x_t = x_t.reshape(80,80)
@@ -122,35 +123,20 @@ class DeepLearner:
         #terminal = ob[u'IsAlive']    
         terminal = False 
         
-        s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
+        self.s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
 
         # saving and loading networks
-        self.saver = tf.train.Saver()
-        self.sess.run(tf.initialize_all_variables())
-        checkpoint = tf.train.get_checkpoint_state("networks")
-        if checkpoint and checkpoint.model_checkpoint_path:
-            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
-            print("Successfully loaded:", checkpoint.model_checkpoint_path)
-        else:
-            print("Could not find old network weights")
-        
-        self.a = a
-        self.y = y
-        self.train_step = train_step
-        self.s_t = s_t
-        
+                
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
-        a_t = np.zeros([ACTIONS])
-        action_index = 0
+        self.a_t = np.zeros([ACTIONS])
         if random.random() <= self.epsilon:
         #if True:
             print("----------Random Action----------")
             action_index = random.randrange(ACTIONS)
-            a_t[random.randrange(ACTIONS)] = 1
+            self.a_t[random.randrange(ACTIONS)] = 1
         else:
             action_index = np.argmax(readout_t)
-            a_t[action_index] = 1
-        self.a_t = a_t
+            self.a_t[action_index] = 1
         return action_index
 
     
@@ -161,11 +147,11 @@ class DeepLearner:
 
         # run the selected action and observe next state and reward
         x_t1 = self.agent.resize( self.agent.getPixels(frame))
-        #x_t1 = self.agent.threshold(x_t1)
         #cv2.imwrite('messigray.png',x_t1)
         x_t1 = x_t1.reshape(80,80,1)
         
         r_t = self.agent.getReward(ob)
+
         #terminal = ob[u'IsAlive']
         terminal = False 
         
@@ -216,7 +202,6 @@ class DeepLearner:
 
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
         self.a_t = np.zeros([ACTIONS])
-        action_index = 0
         if random.random() <= self.epsilon:
             print("----------Random Action----------")
             action_index = random.randrange(ACTIONS)
@@ -237,12 +222,5 @@ class DeepLearner:
             print("TIMESTEP", self.t, "/ STATE", state, \
                 "/ EPSILON", self.epsilon, "/ ACTION", self.a_t, "/ REWARD", r_t, \
                 "/ Q_MAX %e" % np.max(readout_t))
-        # write info to files
-        '''
-        if t % 10000 <= 100:
-            a_file.write(",".join([str(x) for x in readout_t]) + '\n')
-            h_file.write(",".join([str(x) for x in h_fc1.eval(feed_dict={s:[s_t]})[0]]) + '\n')
-            cv2.imwrite("logs_tetris/frame" + str(t) + ".png", x_t1)
-        '''
         
         return action_index
