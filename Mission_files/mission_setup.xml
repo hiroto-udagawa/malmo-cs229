@@ -9,17 +9,15 @@
 		<ServerInitialConditions>
 			<Weather>clear</Weather>
       <Time>
-          <StartTime>13500</StartTime>
+          <StartTime>9500</StartTime>
           <AllowPassageOfTime>false</AllowPassageOfTime>
       </Time>
 		</ServerInitialConditions>
 		<ServerHandlers>
       <FlatWorldGenerator generatorString="3;7,220*1,5*3,2;3;dungeon" />
-			<DrawingDecorator>
-        <DrawCuboid x1="-30" y1="206" z1="-30" x2="30" y2="226" z2="30" type="stone"/>
-        <DrawCuboid x1="-29" y1="207" z1="-29" x2="29" y2="226" z2="29" type="air"/>								
-				<DrawLine x1="-3" y1="206" z1="-2" x2="3" y2="206" z2="-2" type="mob_spawner" variant="Zombie"/>  
-				
+			<DrawingDecorator>	
+        <DrawCuboid x1="-28" y1="206" z1="-30" x2="28" y2="240" z2="30" type="stone"/>
+        <DrawCuboid x1="-27" y1="207" z1="-29" x2="27" y2="240" z2="29" type="air"/>								
 			</DrawingDecorator>
 			<ServerQuitFromTimeUp timeLimitMs="100000"/>
 			<ServerQuitWhenAnyAgentFinishes/>
@@ -38,6 +36,7 @@
           <Width>640</Width>
           <Height>480</Height>
       </VideoProducer>
+			<ChatCommands />
 			<ContinuousMovementCommands />
 			<ObservationFromFullStats/>
 			<ObservationFromRay/>
