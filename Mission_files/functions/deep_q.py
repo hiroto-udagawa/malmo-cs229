@@ -5,14 +5,19 @@ import random
 from DeepAgent import DeepAgent
 import cv2
 
-image_width = 84
-image_height = 84
+image_dim = 84
 sess = tf.InteractiveSession()
-PIXELS = image_width * image_height
-neurons = 1024
-first_layer_filter = 32
-layer_size = 5
-second_layer_filter = 64
+PIXELS = image_dim * image_dim
+neurons = 512
+filter1_dim = 8
+filter1_depth = 32
+filter1_stride = 4
+filter2_dim = 4
+filter2_depth = 64
+filter2_stride = 2
+filter3_dim = 3
+filter3_depth = 64
+filter3_stride = 1
 
 ACTIONS = 8
 GAMMA = 0.99 # decay rate of past observations
@@ -25,8 +30,8 @@ INITIAL_EPSILON = 1 # starting value of epsilon
 REPLAY_MEMORY = 10000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
 
-FRAME_PER_ACTION=1
-FRAMES= 4
+FRAME_PER_ACTION = 1
+FRAMES = 4
 
 class DeepLearner:
     
@@ -72,36 +77,29 @@ class DeepLearner:
 
 
     def createNet(self):
-        W_conv1 = self.weight_variable([8, 8, 4, 32])
-        b_conv1 = self.bias_variable([32])
+        W_conv1 = self.weight_variable([filter1_dim, filter1_dim, FRAMES, filter1_depth]) #8,8,4,32
+        b_conv1 = self.bias_variable([filter1_depth]) #32
 
-        W_conv2 = self.weight_variable([4, 4, 32, 64])
-        b_conv2 = self.bias_variable([64])
+        W_conv2 = self.weight_variable([filter2_dim, filter2_dim, filter1_depth, filter2_depth]) #4,4,32,64
+        b_conv2 = self.bias_variable([filter2_depth]) #64
 
-        W_conv3 = self.weight_variable([3, 3, 64, 64])
-        b_conv3 = self.bias_variable([64])
+        W_conv3 = self.weight_variable([filter3_dim, filter3_dim, filter2_depth, filter3_depth]) #3,3,64,64
+        b_conv3 = self.bias_variable([filter3_depth]) #64
 
-        W_fc1 = self.weight_variable([7*7*64, 512])
-        b_fc1 = self.bias_variable([512])
+        W_fc1 = self.weight_variable([7*7*filter3_depth, neurons]) #7*7*64, 512
+        b_fc1 = self.bias_variable([neurons]) #512
 
-        W_fc2 = self.weight_variable([512, ACTIONS])
+        W_fc2 = self.weight_variable([neurons, ACTIONS]) #512
         b_fc2 = self.bias_variable([ACTIONS])
 
         # input layer
-        s = tf.placeholder(tf.float32, [None, 84, 84, FRAMES])
+        s = tf.placeholder(tf.float32, [None, image_dim, image_dim, FRAMES])
 
         # hidden layers
-        h_conv1 = tf.nn.relu(self.conv2d(s, W_conv1, 4) + b_conv1)
-
-        h_conv2 = tf.nn.relu(self.conv2d(h_conv1, W_conv2, 2) + b_conv2)
-        #h_pool2 = max_pool_2x2(h_conv2)
-
-        h_conv3 = tf.nn.relu(self.conv2d(h_conv2, W_conv3, 1) + b_conv3)
-        #h_pool3 = max_pool_2x2(h_conv3)
-
-        #h_pool3_flat = tf.reshape(h_pool3, [-1, 256])
-        h_conv3_flat = tf.reshape(h_conv3, [-1, 7*7*64])
-
+        h_conv1 = tf.nn.relu(self.conv2d(s, W_conv1, filter1_stride) + b_conv1) #stride 4
+        h_conv2 = tf.nn.relu(self.conv2d(h_conv1, W_conv2, filter2_stride) + b_conv2) #stride 2
+        h_conv3 = tf.nn.relu(self.conv2d(h_conv2, W_conv3, filter3_stride) + b_conv3) #stride 1
+        h_conv3_flat = tf.reshape(h_conv3, [-1, 7*7*filter3_depth])
         h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
 
         # readout layer
@@ -115,7 +113,7 @@ class DeepLearner:
 
         x_t = self.agent.resize( self.agent.getPixels(frame))
         #x_t = self.agent.threshold(x_t)
-        x_t = x_t.reshape(84,84)
+        x_t = x_t.reshape(image_dim, image_dim)
         
         r_0 = self.agent.getReward(ob)
         #terminal = ob[u'IsAlive']    
@@ -146,7 +144,7 @@ class DeepLearner:
         # run the selected action and observe next state and reward
         x_t1 = self.agent.resize( self.agent.getPixels(frame))
         #cv2.imwrite('messigray.png',x_t1)
-        x_t1 = x_t1.reshape(84,84,1)
+        x_t1 = x_t1.reshape(image_dim, image_dim ,1)
         
         r_t = self.agent.getReward(ob)
 
