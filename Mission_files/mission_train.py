@@ -58,7 +58,6 @@ my_mission_record = MalmoPython.MissionRecordSpec()
 deep_learner = DeepLearner()
 num_repeats = 10000
 kills = 0
-
 for i in xrange(num_repeats):
     prev_kills = kills
     first = True
@@ -100,7 +99,7 @@ for i in xrange(num_repeats):
     
     while world_state.is_mission_running:
         agent_host.sendCommand("attack 1")
-        time.sleep(0.05)
+        time.sleep(0.03)
         if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
             if first == True:   
                 ob = json.loads(world_state.observations[-1].text)                
@@ -111,10 +110,10 @@ for i in xrange(num_repeats):
             else:
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]
-                prev_action = action
+                #prev_action = action
                 action = deep_learner.trainNetwork(frame, ob)
-                agent_host.sendCommand(deep_learner.agent.antiActions[prev_action]) 
-                agent_host.sendCommand(deep_learner.agent.actions[action])                
+                #agent_host.sendCommand(deep_learner.agent.antiActions[prev_action]) 
+                agent_host.sendCommand(deep_learner.agent.actions[action])
     
         #agent_host.sendCommand("jump 1")
             if "MobsKilled" in ob and ob[u'MobsKilled'] > kills:

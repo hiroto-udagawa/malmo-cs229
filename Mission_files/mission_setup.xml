@@ -24,7 +24,7 @@
 		</ServerHandlers>
 	</ServerSection>
 	<AgentSection mode="Survival">
-		<Name>Cristina</Name>
+		<Name>Andrew</Name>
 		<AgentStart>
       <Placement x="0" y="207" z="-12" pitch="20" yaw="0"/>
 			<Inventory>

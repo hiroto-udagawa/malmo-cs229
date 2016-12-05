@@ -11,10 +11,9 @@ class DeepAgent:
 
     def __init__(self):
         self.cum_reward = 0
-        #self.actions = ["move 1", "move 0", "move -1", "turn -1", "turn 1", "turn 0", "attack 1", "attack 0"]
-        self.actions = ["move 1",  "move -1", "turn -1", "turn 1", "move 0"]  
-        self.antiActions = ["move 0", "move 0", "turn 0", "turn 0", "move 0"]
-        self.rewards = {"health":-5 , "kills":100, "time":0.02, "hit":0.5}
+        self.actions = ["move 1",  "move -1", "turn -1", "turn 1", "turn -0.3", "turn 0.3", "move 0", "turn 0"]  
+        #self.antiActions = ["move 0", "move 0", "turn 0", "turn 0", "turn 0", "turn 0", "move 0"]
+        self.rewards = {"health":-5 , "kills":100, "time":0.02, "hit":1}
         self.currentHealth = 20
         self.kills = 0
         
@@ -46,19 +45,9 @@ class DeepAgent:
         return img      
                                                            
     def resize(self, image):
-        '''
-            Resizes the image to 80 by 80, works only if the dimensions are
-            multiples of 80
-            '''         
-    	'''                        
-            dim1 = image.shape[0]                              
-            dim2 = image.shape[1]                              
-            stride1 = dim1 / 80                                
-            stride2 = dim2 / 80                                
-            return image[::stride1, ::stride2]
-    	'''
+
         #return cv2.resize(image,(80,80))[:,:,2]
-        return cv2.cvtColor(cv2.resize(image, (80, 80)), cv2.COLOR_RGB2GRAY)
+        return cv2.cvtColor(cv2.resize(image, (84, 84)), cv2.COLOR_RGB2GRAY)
 	
     def threshold(self, image):
         #retval, th_image = cv2.threshold(image,1,255,cv2.THRESH_BINARY) 
