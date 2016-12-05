@@ -5,10 +5,8 @@ import random
 from DeepAgent import DeepAgent
 import cv2
 
-# image_width = 480
-# image_height = 640
-image_width = 80
-image_height = 80
+image_width = 84
+image_height = 84
 sess = tf.InteractiveSession()
 PIXELS = image_width * image_height
 neurons = 1024
@@ -16,15 +14,17 @@ first_layer_filter = 32
 layer_size = 5
 second_layer_filter = 64
 
-ACTIONS = 4
+ACTIONS = 8
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
-#OBSERVE = 32. # timesteps to observe before training
+#OBSERVE = 32 # timesteps to observe before training
 EXPLORE = 100000. # frames over which to anneal epsilon
-FINAL_EPSILON = 0.0001 # final value of epsilon
-INITIAL_EPSILON = 0.1 # starting value of epsilon
+FINAL_EPSILON = 0.1 # final value of epsilon
+INITIAL_EPSILON = 1 # starting value of epsilon
+#INITIAL_EPSILON = 0.077 # starting value of epsilon
 REPLAY_MEMORY = 10000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
+
 FRAME_PER_ACTION=1
 FRAMES= 4
 
@@ -65,10 +65,10 @@ class DeepLearner:
       return tf.Variable(initial)
 
     def conv2d(self, x, W, stride):
-        return tf.nn.conv2d(x, W, strides = [1, stride, stride, 1], padding = "SAME")
+        return tf.nn.conv2d(x, W, strides = [1, stride, stride, 1], padding = "VALID")
 
-    def max_pool_2x2(self, x):
-      return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+    #def max_pool_2x2(self, x):
+      #return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 
     def createNet(self):
@@ -81,33 +81,31 @@ class DeepLearner:
         W_conv3 = self.weight_variable([3, 3, 64, 64])
         b_conv3 = self.bias_variable([64])
 
-        W_fc1 = self.weight_variable([1600, 512])
+        W_fc1 = self.weight_variable([7*7*64, 512])
         b_fc1 = self.bias_variable([512])
 
         W_fc2 = self.weight_variable([512, ACTIONS])
         b_fc2 = self.bias_variable([ACTIONS])
 
         # input layer
-        s = tf.placeholder("float", [None, image_height, image_width, FRAMES])
+        s = tf.placeholder(tf.float32, [None, 84, 84, FRAMES])
 
         # hidden layers
         h_conv1 = tf.nn.relu(self.conv2d(s, W_conv1, 4) + b_conv1)
-        h_pool1 = self.max_pool_2x2(h_conv1)
 
-        h_conv2 = tf.nn.relu(self.conv2d(h_pool1, W_conv2, 2) + b_conv2)
+        h_conv2 = tf.nn.relu(self.conv2d(h_conv1, W_conv2, 2) + b_conv2)
         #h_pool2 = max_pool_2x2(h_conv2)
 
         h_conv3 = tf.nn.relu(self.conv2d(h_conv2, W_conv3, 1) + b_conv3)
         #h_pool3 = max_pool_2x2(h_conv3)
 
         #h_pool3_flat = tf.reshape(h_pool3, [-1, 256])
-        h_conv3_flat = tf.reshape(h_conv3, [-1, 1600])
+        h_conv3_flat = tf.reshape(h_conv3, [-1, 7*7*64])
 
         h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
 
         # readout layer
         readout = tf.matmul(h_fc1, W_fc2) + b_fc2
-
         return s, readout, h_fc1
 
     def initNetwork(self,frame, ob):
@@ -117,7 +115,7 @@ class DeepLearner:
 
         x_t = self.agent.resize( self.agent.getPixels(frame))
         #x_t = self.agent.threshold(x_t)
-        x_t = x_t.reshape(80,80)
+        x_t = x_t.reshape(84,84)
         
         r_0 = self.agent.getReward(ob)
         #terminal = ob[u'IsAlive']    
@@ -126,7 +124,7 @@ class DeepLearner:
         self.s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
 
         # saving and loading networks
-                
+
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
         self.a_t = np.zeros([ACTIONS])
         if random.random() <= self.epsilon:
@@ -143,12 +141,12 @@ class DeepLearner:
     def trainNetwork(self, frame, ob):
         # scale down epsilon
         if self.epsilon > FINAL_EPSILON and self.t > OBSERVE:
-            self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / 100000
+            self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
 
         # run the selected action and observe next state and reward
         x_t1 = self.agent.resize( self.agent.getPixels(frame))
         #cv2.imwrite('messigray.png',x_t1)
-        x_t1 = x_t1.reshape(80,80,1)
+        x_t1 = x_t1.reshape(84,84,1)
         
         r_t = self.agent.getReward(ob)
 
@@ -203,7 +201,7 @@ class DeepLearner:
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
         self.a_t = np.zeros([ACTIONS])
         if random.random() <= self.epsilon:
-            print("----------Random Action----------")
+            #print("----------Random Action----------")
             action_index = random.randrange(ACTIONS)
             self.a_t[random.randrange(ACTIONS)] = 1
         else:
