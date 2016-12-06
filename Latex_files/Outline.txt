@@ -1,0 +1,40 @@
+Outline - Final Report
+
+1. Introduction
+    - add few sentences on how/why this is new work
+    - add few sentences on why this matters
+
+2. Related work
+    - DeepMind's Nature paper
+    - Flappy Bird
+    - van de goor (?)
+
+3. Malmo
+    esp. how it's different from other simulators
+    (i.e. more constrained)
+
+4. Methods
+    i.) Scenario
+        Setting: room description, inventory
+        Objective: kill zombies until...?
+        Other Minecraft-specific issues
+        Include screenshot from game (?)
+
+    ii.) MDP Formulation
+        1. Actions
+        2. States
+        3. Reward
+        4. Deep Q-Learning
+            Brief overview of feature extraction/training:
+            being e-greedy, convnets, etc.
+
+5. Results and Analysis
+    i.) Graphs, tables
+    ii.) Analysis of methods/results over different experiments
+        - Discussion of results, which method worked
+        - Explanation/theory for which method worked best
+        - Issues/problems
+
+6. Conclusions and Future work
+
+7. References
