@@ -7,7 +7,6 @@ Outline - Final Report
 2. Related work
     - DeepMind's Nature paper
     - Flappy Bird
-    - van de goor (?)
 
 3. Malmo
     esp. how it's different from other simulators
@@ -18,15 +17,15 @@ Outline - Final Report
         Setting: room description, inventory
         Objective: kill zombies until...?
         Other Minecraft-specific issues
-        Include screenshot from game (?)
+        Include screenshot from game (if space)
 
     ii.) MDP Formulation
         1. Actions
         2. States
         3. Reward
-        4. Deep Q-Learning
-            Brief overview of feature extraction/training:
-            being e-greedy, convnets, etc.
+        4. Deep Q-Learning and Theory
+	    - Overview of theory (e.g. convnets and being e-greedy)
+	    - Brief overview of feature extraction/training
 
 5. Results and Analysis
     i.) Graphs, tables
