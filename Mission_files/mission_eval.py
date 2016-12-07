@@ -1,4 +1,4 @@
-#------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
 # Copyright (c) 2016 Microsoft Corporation
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -23,12 +23,12 @@ import MalmoPython
 import os
 import sys
 import time
-import numpy as np
 import json
 import random
 sys.path.append("functions/.")
 from DeepAgent import DeepAgent
-from Pixels import getPixels
+from deep_q import  DeepLearner
+import tensorflow as tf
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -47,7 +47,6 @@ if agent_host.receivedArgument("help"):
 agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
 agent_host.setVideoPolicy(MalmoPython.VideoPolicy.LATEST_FRAME_ONLY)
 
-
 # -- set up the mission -- #
 mission_file = './mission_setup.xml'
 with open(mission_file, 'r') as f:
@@ -55,14 +54,18 @@ with open(mission_file, 'r') as f:
     mission_xml = f.read()
     my_mission = MalmoPython.MissionSpec(mission_xml, True)
 my_mission_record = MalmoPython.MissionRecordSpec()
-#for i in my_mission.getAllowedCommands(0,'AbsoluteMovementCommands'):
-#    print i
 
-num_repeats=1
+rewards = []
+deep_learner = DeepLearner()
+num_repeats = 10000
+kills = 0
+
 for i in xrange(num_repeats):
+    prev_kills = kills
+    first = True
     cum_reward = 0
-    agent = DeepAgent()
-
+    deep_learner.agent = DeepAgent()
+    deep_learner.agent.kills = kills
     print
     print 'Repeat %d of %d' % ( i+1, num_repeats )
 # Attempt to start a mission:
@@ -78,7 +81,6 @@ for i in xrange(num_repeats):
             else:
                 time.sleep(2)
 
-
     # Loop until mission starts:
     print "Waiting for the mission to start ",
     world_state = agent_host.getWorldState()
@@ -89,28 +91,48 @@ for i in xrange(num_repeats):
         for error in world_state.errors:
             print "Error:",error.text
     print "Mission running ",
-
     #Loop until mission ends:
+    
+    for i in xrange(-3, 0):
+        for j in xrange(-3,-1):
+            agent_host.sendCommand("chat /summon Zombie " + str(i) + " 207 " +  str(j) +  " {Equipment:[{},{},{},{},{id:minecraft:stone_button}]}")
+    agent_host.sendCommand("chat /gamerule doNaturalRegen false")
+    
+    
     while world_state.is_mission_running:
-        sys.stdout.write(".")
-        time.sleep(0.1)
-        #print world_state.video_frames[0]
-        if len(world_state.observations) > 0:
-            ob = json.loads(world_state.observations[-1].text)
-            print ob
-            print "Rewards: " , agent.getReward(ob)
-            print ob[u'IsAlive']
-            cum_reward += agent.getReward(ob)
-        
+        agent_host.sendCommand("attack 1")
+        time.sleep(0.08)
+        if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
+            if first == True:   
+                ob = json.loads(world_state.observations[-1].text)                
+                frame = world_state.video_frames[0]                
+                action = deep_learner.initNetwork(frame, ob, True)
+                agent_host.sendCommand(deep_learner.agent.actions[action])
+                first = False
+            else:
+                ob = json.loads(world_state.observations[-1].text)
+                frame = world_state.video_frames[0]
+                #prev_action = action
+                action = deep_learner.evalNetwork(frame, ob)
+                #agent_host.sendCommand(deep_learner.agent.antiActions[prev_action]) 
+                agent_host.sendCommand(deep_learner.agent.actions[action])
     
-    
-        agent_host.sendCommand("move 1")
         #agent_host.sendCommand("jump 1")
+            if "MobsKilled" in ob and ob[u'MobsKilled'] > kills:
+                agent_host.sendCommand("chat /summon Zombie -1 207 -3 {Equipment:[{},{},{},{},{id:minecraft:stone_button}]}")
+                kills = ob[u'MobsKilled']
+            
         world_state = agent_host.getWorldState()
         for error in world_state.errors:
             print "Error:",error.text
             
-    print "We scored " + str(cum_reward)
+    print "We scored " + str(deep_learner.agent.cum_reward)
+    print "We Killed " + str(kills - prev_kills)
+    rewards.append(deep_learner.agent.cum_reward)
+    file = open("rewards.txt", "a")
+    file.write(str(deep_learner.agent.cum_reward) + " ")
+    file.close()
+    
     
 print
 print "Mission ended"

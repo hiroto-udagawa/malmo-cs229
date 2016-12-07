@@ -18,9 +18,9 @@ ACTIONS = 8
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 32 # timesteps to observe before training
-EXPLORE = 100000. # frames over which to anneal epsilon
-FINAL_EPSILON = 0.1 # final value of epsilon
-INITIAL_EPSILON = 1 # starting value of epsilon
+EXPLORE = 50000. # frames over which to anneal epsilon
+FINAL_EPSILON = 0.05 # final value of epsilon
+INITIAL_EPSILON = 0.5 # starting value of epsilon
 #INITIAL_EPSILON = 0.077 # starting value of epsilon
 REPLAY_MEMORY = 10000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
@@ -108,7 +108,7 @@ class DeepLearner:
         readout = tf.matmul(h_fc1, W_fc2) + b_fc2
         return s, readout, h_fc1
 
-    def initNetwork(self,frame, ob):
+    def initNetwork(self,frame, ob, eval):
         # printing
         #a_file = open("logs/readout.txt", 'w')
         #h_file = open("logs/hidden.txt", 'w')
@@ -127,7 +127,7 @@ class DeepLearner:
 
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
         self.a_t = np.zeros([ACTIONS])
-        if random.random() <= self.epsilon:
+        if not eval and random.random() <= self.epsilon:
         #if True:
             print("----------Random Action----------")
             action_index = random.randrange(ACTIONS)
@@ -156,9 +156,16 @@ class DeepLearner:
         #s_t1 = np.append(x_t1, s_t[:,:,1:], axis = 2)
 
         s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
-
+        #cv2.imwrite('messigray.png',x_t1)
+        
+        #cv2.imwrite('messigray1.png', np.reshape(s_t1[:,:,0], (84,84)))
+        #cv2.imwrite('messigray2.png',np.reshape(s_t1[:,:,1], (84,84)))
+        #cv2.imwrite('messigray3.png',np.reshape(s_t1[:,:,2], (84,84)))
+        #cv2.imwrite('messigray4.png',np.reshape(s_t1[:,:,3], (84,84)))
         # store the transition in D
         self.D.append((self.s_t, self.a_t, r_t, s_t1, terminal))
+
+        
         if len(self.D) > REPLAY_MEMORY:
             self.D.popleft()
 
@@ -222,3 +229,41 @@ class DeepLearner:
                 "/ Q_MAX %e" % np.max(readout_t))
         
         return action_index
+        
+    def evalNetwork(self, frame, ob):
+        
+        x_t1 = self.agent.resize( self.agent.getPixels(frame))
+        x_t1 = x_t1.reshape(84,84,1)
+        r_t = self.agent.getReward(ob)
+
+        terminal = False 
+        s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
+        
+        self.s_t = s_t1
+        self.t += 1
+
+        # save progress every 10000 iterations
+        if self.t % 10000 == 0:
+            self.saver.save(self.sess, 'networks/zombie-dqn', global_step = self.t)
+
+        readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
+        self.a_t = np.zeros([ACTIONS])
+        action_index = np.argmax(readout_t)
+        self.a_t[action_index] = 1
+        
+        # print info
+        state = ""
+        if self.t <= OBSERVE:
+            state = "observe"
+        elif self.t > OBSERVE and self.t <= OBSERVE + EXPLORE:
+            state = "explore"
+        else:
+            state = "train"
+        if self.t % 100 == 0:
+            print("TIMESTEP", self.t, "/ STATE", state, \
+                "/ EPSILON", self.epsilon, "/ ACTION", self.a_t, "/ REWARD", r_t, \
+                "/ Q_MAX %e" % np.max(readout_t))
+                
+        return action_index
+            
+        
