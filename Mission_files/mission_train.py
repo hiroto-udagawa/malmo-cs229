@@ -55,9 +55,11 @@ with open(mission_file, 'r') as f:
     my_mission = MalmoPython.MissionSpec(mission_xml, True)
 my_mission_record = MalmoPython.MissionRecordSpec()
 
+rewards = []
 deep_learner = DeepLearner()
 num_repeats = 10000
 kills = 0
+
 for i in xrange(num_repeats):
     prev_kills = kills
     first = True
@@ -104,16 +106,19 @@ for i in xrange(num_repeats):
             if first == True:   
                 ob = json.loads(world_state.observations[-1].text)                
                 frame = world_state.video_frames[0]                
-                action = deep_learner.initNetwork(frame, ob)
-                agent_host.sendCommand(deep_learner.agent.actions[action])
+                action = deep_learner.initNetwork(frame, ob, False)
+                for i in deep_learner.agent.actions[action]:
+                    agent_host.sendCommand(i)
                 first = False
             else:
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]
-                #prev_action = action
+                prev_action = action
                 action = deep_learner.trainNetwork(frame, ob)
-                #agent_host.sendCommand(deep_learner.agent.antiActions[prev_action]) 
-                agent_host.sendCommand(deep_learner.agent.actions[action])
+                for i in deep_learner.agent.antiActions[prev_action]:
+                    agent_host.sendCommand(i)
+                for j in deep_learner.agent.actions[action] :
+                    agent_host.sendCommand(j)
     
         #agent_host.sendCommand("jump 1")
             if "MobsKilled" in ob and ob[u'MobsKilled'] > kills:
@@ -126,6 +131,11 @@ for i in xrange(num_repeats):
             
     print "We scored " + str(deep_learner.agent.cum_reward)
     print "We Killed " + str(kills - prev_kills)
+    rewards.append(deep_learner.agent.cum_reward)
+    file = open("rewards_eval.txt", "a")
+    file.write(str(deep_learner.agent.cum_reward) + " ")
+    file.close()
+    
     
 print
 print "Mission ended"
