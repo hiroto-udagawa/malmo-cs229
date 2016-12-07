@@ -113,10 +113,10 @@ for i in xrange(num_repeats):
             else:
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]
-                prev_action = action
+                #prev_action = action
                 action = deep_learner.trainNetwork(frame, ob)
-                for i in deep_learner.agent.antiActions[prev_action]:
-                    agent_host.sendCommand(i)
+                agent_host.sendCommand("move 0")
+                agent_host.sendCommand("turn 0")
                 for j in deep_learner.agent.actions[action] :
                     agent_host.sendCommand(j)
     
