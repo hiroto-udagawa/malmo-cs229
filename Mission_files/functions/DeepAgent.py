@@ -11,7 +11,10 @@ class DeepAgent:
 
     def __init__(self):
         self.cum_reward = 0
-        self.actions = ["move 1",  "move -1", "turn -1", "turn 1", "turn -0.3", "turn 0.3", "move 0", "turn 0"]  
+        #self.actions = ["move 1",  "move -1", "turn -1", "turn 1", "turn -0.3", "turn 0.3", "move 0", "turn 0"]  
+        self.actions = [("move 1", "turn 0.7"), ("move -1, turn 0.7"), ("move 1", "turn -0.7"), 
+                        ("move -1", "turn -0.7"), ("move 0", "turn 0.7"), ("move 0", "turn -0.7"),
+                        ("move 1", "turn 0"), ("move -1", "turn 0")]       
         #self.antiActions = ["move 0", "move 0", "turn 0", "turn 0", "turn 0", "turn 0", "move 0"]
         self.rewards = {"health":-5 , "kills":100, "time":0.02, "hit":1}
         self.currentHealth = 20
