@@ -1,0 +1,216 @@
+\documentclass{article}
+\usepackage[margin=.5in]{geometry}
+%\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\usepackage[boxruled,vlined]{algorithm2e}
+\usepackage{verbatim}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+\graphicspath{{ ./ }}
+
+\title{Defeated Zombies Through Deep Q-Learning in Minecraft}
+\author{Hiroto Udagawa, Tarun Narasimhan, Shim-Young Lee}
+\date{December 16, 2016}
+
+\begin{document}
+\maketitle
+
+\begin{multicols}{2}
+
+\section{Introduction}
+
+In this project, we train an agent in the video game Minecraft with reinforcement learning to kill as many monsters as possible in a confined space. Our agent is only equipped with a sword to attack the monsters,  which can themselves attack and kill the agent.
+The objective is to have the agent learn what policies to execute based on the visual information it receives about the surroundings from the raw pixels of the game play screen and the reward structure we have designed.
+Using a convolutional neural network and Q-function reinforcement learning, the agent showed definite improvement in its ability to kill monsters.
+This project displays the promise of combining deep learning with reinforcement learning to achieve non-trivial tasks.
+
+
+
+
+
+
+\section{Related Work}
+
+There have been several projects in this area which we drew upon for our project.
+The major inspiration for our work was DeepMind's 2013 paper on deep reinforcement learning, in which the agent was trained with a single model architecture (Deep Q Learning) that uses convolutional neural network to perform a variant of Q-learning, and successfully played 7 different Atari 2600 games, in a few of which the agent outperformed human experts \cite{deepMind}.
+Instead of solving the standard action-value function (Q function) with Bellman equation, deep convolutional neural network was used as a nonlinear function approximator, along with a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
+While a different network was trained for each game, the same architecture and hyperparameters were used across all of the games.
+Furthermore, no prior (or game specific) knowledge was used, but only the raw pixel values were fed to the network as inputs.
+DeepMind's major achievement was using extremely high-dimensional states (the visual input from the agent) and no information about the game rules to train an algorithm which could outperform skilled human players, and we aimed to replicate this in our project.
+
+For the actual implementation of DeepMind's DQN in Python and TensorFlow, we relied heavily on Chen's work, which was also inspired by DeepMind's DQN and applied the same model architecture and algorithm to the game Flappy Bird \cite{flappyBird}.
+
+
+
+
+\section{Minecraft and Project Malmo}
+
+For the setting of our project, we chose Minecraft, a popular sandbox video game that was released in 2011. It allows players to control an agent, through which they can explore the map, build structures, craft tools, and destroy computer-generated monsters.
+Project Malmo is an open source platform for Minecraft created by Microsoft that offers an interface for researchers to experiment with different approaches to artificial intelligence by controlling an agent through Python scripts.
+
+Malmo is a useful environment for artificial intelligence research because it allows users to test endless situations within a relatively simple framework by  controlling agents' movements and environments via code.
+By combining different states, actions, and spaces, researchers can create different environments and define various tasks for which the agent trains with reinforcement learning.
+
+As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed Malmo to be an interface with Minecraft, but not to provide the agent with any information about Minecraft.
+Thus, the default in Malmo is for the player-controlled agent to not have any information about its environment or the rules of the game.
+This feature makes Malmo very convenient for reinforcement learning as this replicates the exact kind of environment we want for reinforcement learning: in order to maximize difficulty, the agent should be trained only from its own visual input.
+For example, the agent does not "know" that the \emph{attack} action kills zombies; it learns this through training.
+
+[{\bf Hiro: do you want to discuss Minecraft/Malmo implementation issues here? Like the lag issue?}]
+
+
+
+
+\section{Method}
+
+
+
+\subsection{Scenario}
+
+The agent begins in the middle of a completely flat room with a fixed number of randomly generated zombies. The room has a uniform color so that the algorithm will not have to account for differences in lighting and colors. The zombies automatically approach the agent and damage it if they get too close. The agent will be equipped with a sword to fend off the zombies. As the agent destroys zombies, new zombies continue to spawn (so that there is always a constant number of zombies), and the game continues to run until the character loses all of its health. At this time, the score will be calculated based on the total number of zombies that the character was able to kill and the scenario resets to the beginning.
+
+
+
+
+\subsection{MDP Formulation}
+
+
+
+\subsubsection{Actions and States}
+
+The actions for this problem are the discrete movements of the agent (the agent can move forward, back, left, or right, or remain stationary) as well as the ability to attack with a sword.
+Minecraft provides the agent with continuous movement actions, but for the purposes of this project we have discretized this into five possible actions.
+
+The states are composed of the image of the player's vision represented by the pixels of the screen. Project Malmo provides the functionality to retrieve the image from the screen and feed this back into our algorithm. In this way, the agent reacts to its environment based on visual input.
+In order to give the agent temporal information, we store the last four frames of the game and make those the agent's state at any given time.
+
+\begin{figure}[H]
+\caption{Minecraft screenshot}
+\centering
+\includegraphics[scale=0.3]{./hiro_screenshot.png}
+\end{figure}
+
+
+
+\subsubsection{Reward}
+
+We assign the algorithm a reward of +1 for a successful hit on a monster and a reward of +5 for a successful kill.
+There is also a reward of 0.03 for every frame for which it stays alive and a penalty of -1 for every time the agent gets hit. These are designed to train the agent's behavior to incentivize staying alive; holding the kill count equal, we wanted the agent to have a higher reward for staying alive longer.
+
+
+
+\subsubsection{Deep Q-Learning and Theory}
+
+We use Q-learning to have our agent learn a policy to best fight these monsters.
+We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
+\paragraph{}
+
+
+\begin{algorithm*}[H]
+     \SetAlgoLined
+     initialize Q function with random weights \;
+     observe initial state $S$ \;
+     \Repeat{terminated} {
+        with probability $\epsilon$ generate random action \;
+        otherwise select $a = \arg\max_{a'} Q(s,a')$ \;
+        carry out action $a$ \;
+        observe reward $r$ and new state $s'$ \;
+        update $D$ with new data: $<s,a,r,s'>$ \;
+        sample random transitions from $D$ \;
+        update network \;
+     }
+     \caption{Adapted from Matiisen, 2015}
+\end{algorithm*}
+
+\begin{figure}[H]
+\caption{Images of processed features}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=1.0]{./messigray1.png}
+  \caption{1a}
+  \label{fig:sfig1}
+\end{subfigure}%
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=1.0]{./messigray2.png}
+  \caption{1b}
+  \label{fig:sfig2}
+\end{subfigure}
+\vskip\baselineskip
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=1.0]{./messigray3.png}
+  \caption{1b}
+  \label{fig:sfig3}
+\end{subfigure}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=1.0]{./messigray4.png}
+  \caption{1b}
+  \label{fig:sfig4}
+\end{subfigure}
+\label{fig:fig}
+\end{figure}
+
+
+
+\section{Results and Analysis}
+
+The agent kicks ass and takes names like Chuck Norris on cocaine.
+
+\begin{description}
+    \item[Table 1: Learning rate under varying Reward Structures]
+    \item[Table 2: Learning rate under varying $\epsilon$]
+    \item[Table 3: Learning rate under varying learning rates]
+    \item[Table 4: Learning rate under varying difficulties]
+\end{description}
+
+We ran into the unexpected problem that...
+
+
+
+
+
+\section{Conclusions and Future work}
+We succesfully trained a Deep Q Network to move around a room and kill zombies by taking visual input from the agent.
+Our results suggest that \emph{foo} and \emph{bar} methods worked best because [...]
+
+Future work on this task might focus on expanding the agent's action space so that the agent can execute continuous movements rather than the discretized actions we have programmed.
+Additionally, researchers could focus on improving DeepMind's convolutional neural network to further enhance the performance or learning curve of the algorithm.
+This might involve different gradient algorithms or initial weights.
+
+\end{multicols}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%% Bibliography %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
+\begin{thebibliography}{9}
+
+
+\bibitem{deepMind}
+Mnih, Volodymyr; Kavukcuoglu, Koray; Silver, David; Graves, Alex; Antonoglou, Ioannis; Wierstra, Daan; Riedmiller, Martin.
+\emph{Playing Atari with Deep Reinforcement Learning},
+December 2013.
+
+\bibitem{nervanasys}
+Matiisen, Tambet.
+\emph{Demystifying Deep Reinforcement Learning}. December 2015.
+\url{https://www.nervanasys.com/demystifying-deep-reinforcement-learning/}
+
+\bibitem{flappyBird}
+Chen, Kevin.
+\emph{Deep Reinforcment Learning for Flappy Bird}
+
+
+\end{thebibliography}
+
+
+\end{document}
