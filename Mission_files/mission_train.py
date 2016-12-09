@@ -55,15 +55,16 @@ with open(mission_file, 'r') as f:
     my_mission = MalmoPython.MissionSpec(mission_xml, True)
 my_mission_record = MalmoPython.MissionRecordSpec()
 
-rewards = []
 deep_learner = DeepLearner()
-num_repeats = 10000
+num_repeats = 5000
 kills = 0
+t = 0
 
 for i in xrange(num_repeats):
+    
     prev_kills = kills
+    t = deep_learner.t
     first = True
-    cum_reward = 0
     deep_learner.agent = DeepAgent()
     deep_learner.agent.kills = kills
     print
@@ -93,10 +94,13 @@ for i in xrange(num_repeats):
     print "Mission running ",
     #Loop until mission ends:
     
-    for i in xrange(-3, 0):
+    for i in xrange(-3, -1):
         for j in xrange(-3,-1):
-            agent_host.sendCommand("chat /summon Zombie " + str(i) + " 207 " +  str(j) +  " {Equipment:[{},{},{},{},{id:minecraft:stone_button}]}")
-    agent_host.sendCommand("chat /gamerule doNaturalRegen false")
+            agent_host.sendCommand("chat /summon Zombie " + str(i) + " 207 " +  str(j) +  ' {Equipment:[{},{},{},{},{id:minecraft:stone_button}], HealF:10.0f}')
+    agent_host.sendCommand("chat /summon Zombie -3 207 -1 {Equipment:[{},{},{},{},{id:minecraft:stone_button}], HealF:10.0f}")
+    agent_host.sendCommand("chat /gamerule naturalRegeneration false")
+    agent_host.sendCommand("chat /difficulty 1")
+    
     
     
     while world_state.is_mission_running:
@@ -107,35 +111,34 @@ for i in xrange(num_repeats):
                 ob = json.loads(world_state.observations[-1].text)                
                 frame = world_state.video_frames[0]                
                 action = deep_learner.initNetwork(frame, ob, False)
-                for i in deep_learner.agent.actions[action]:
-                    agent_host.sendCommand(i)
+                agent_host.sendCommand(deep_learner.agent.actions[action])
                 first = False
             else:
                 ob = json.loads(world_state.observations[-1].text)
                 frame = world_state.video_frames[0]
-                #prev_action = action
-                action = deep_learner.trainNetwork(frame, ob)
-                agent_host.sendCommand("move 0")
-                agent_host.sendCommand("turn 0")
-                for j in deep_learner.agent.actions[action] :
-                    agent_host.sendCommand(j)
-    
-        #agent_host.sendCommand("jump 1")
+                prev_action = action
+                action = deep_learner.trainNetwork(frame, ob, False)
+                #print action
+                agent_host.sendCommand(deep_learner.agent.antiActions[prev_action])
+                agent_host.sendCommand(deep_learner.agent.actions[action])
+            
             if "MobsKilled" in ob and ob[u'MobsKilled'] > kills:
-                agent_host.sendCommand("chat /summon Zombie -1 207 -3 {Equipment:[{},{},{},{},{id:minecraft:stone_button}]}")
+                agent_host.sendCommand("chat /summon Zombie -1 207 -3 {Equipment:[{},{},{},{},{id:minecraft:stone_button}], HealF:10.0f}")
                 kills = ob[u'MobsKilled']
             
         world_state = agent_host.getWorldState()
         for error in world_state.errors:
             print "Error:",error.text
-            
+    
+    deep_learner.trainNetwork(frame, ob, True)
     print "We scored " + str(deep_learner.agent.cum_reward)
     print "We Killed " + str(kills - prev_kills)
-    rewards.append(deep_learner.agent.cum_reward)
-    file = open("rewards_eval.txt", "a")
-    file.write(str(deep_learner.agent.cum_reward) + " ")
+    print "We survived for " + str(deep_learner.t - t)
+
+    file = open("rewards.txt", "a")
+    file.write(str(deep_learner.agent.cum_reward) + " " + str(kills-prev_kills) + " " + str(deep_learner.t - t) + "\n")
     file.close()
-    
+        
     
 print
 print "Mission ended"
