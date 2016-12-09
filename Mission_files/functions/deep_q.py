@@ -14,7 +14,7 @@ first_layer_filter = 32
 layer_size = 5
 second_layer_filter = 64
 
-ACTIONS = 8
+ACTIONS = 7
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 32 # timesteps to observe before training
@@ -45,7 +45,8 @@ class DeepLearner:
         self.y = tf.placeholder("float", [None])
         readout_action = tf.reduce_sum(tf.mul(self.readout, self.a), reduction_indices=1)
         cost = tf.reduce_mean(tf.square(self.y - readout_action))
-        self.train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
+        #self.train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
+        self.train_step = tf.train.RMSPropOptimizer(learning_rate=1e-6, decay=0.9, momentum=0.95).minimize(cost)
         
         self.saver = tf.train.Saver()
         self.sess.run(tf.initialize_all_variables())
@@ -138,7 +139,7 @@ class DeepLearner:
         return action_index
 
     
-    def trainNetwork(self, frame, ob):
+    def trainNetwork(self, frame, ob, terminal):
         # scale down epsilon
         if self.epsilon > FINAL_EPSILON and self.t > OBSERVE:
             self.epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
@@ -148,13 +149,7 @@ class DeepLearner:
         #cv2.imwrite('messigray.png',x_t1)
         x_t1 = x_t1.reshape(84,84,1)
         
-        r_t = self.agent.getReward(ob)
-
-        #terminal = ob[u'IsAlive']
-        terminal = False 
-        
-        #s_t1 = np.append(x_t1, s_t[:,:,1:], axis = 2)
-
+        r_t = self.agent.getReward(ob)        
         s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
         #cv2.imwrite('messigray.png',x_t1)
         
