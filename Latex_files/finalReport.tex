@@ -11,7 +11,7 @@
 
 \graphicspath{{ ./ }}
 
-\title{Killing Zombies in Minecraft Through Deep Q-Learning}
+\title{Killing Zombies in Minecraft With Deep Reinforcement Learning}
 \author{Hiroto Udagawa, Tarun Narasimhan, Shim-Young Lee}
 \date{December 16, 2016}
 
@@ -22,9 +22,9 @@
 
 \section{Introduction}
 
-In this project, we train an agent in the video game Minecraft with reinforcement learning to kill as many monsters as possible in a confined space. Our agent is only equipped with a sword to attack the monsters,  which can themselves attack and kill the agent.
+In this project, we train an agent in the video game Minecraft with reinforcement learning to kill as many zombies as possible in a confined space. Our agent is only equipped with a sword to attack the zombies,  which can themselves attack and kill the agent.
 The objective is to have the agent learn what policies to execute based on the visual information it receives about the surroundings from the raw pixels of the game play screen and the reward structure we have designed.
-Using a convolutional neural network and Q-function reinforcement learning, the agent showed definite improvement in its ability to kill monsters.
+Using a convolutional neural network and Q-function reinforcement learning, the agent showed definite improvement in its ability to kill zombies.
 This project displays the promise of combining deep learning with reinforcement learning to achieve non-trivial tasks.
 
 
@@ -35,20 +35,22 @@ This project displays the promise of combining deep learning with reinforcement 
 \section{Related Work}
 
 There have been several projects in this area which we drew upon for our project.
-The major inspiration for our work was DeepMind's 2013 paper on deep reinforcement learning, in which the agent was trained with a single model architecture (Deep Q Learning) that uses convolutional neural network to perform a variant of Q-learning, and successfully played 7 different Atari 2600 games, in a few of which the agent outperformed human experts \cite{deepMind}.
-Instead of solving the standard action-value function (Q function) with Bellman equation, deep convolutional neural network was used as a nonlinear function approximator, along with a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
+The major inspiration for our work was DeepMind's 2013 paper on deep reinforcement learning, in which the agent was trained with a single model architecture (Deep Q Learning) that uses a convolutional neural network to perform a variant of Q-learning, and successfully played 7 different Atari 2600 games, in a few of which the agent outperformed human experts \cite{deepMind}.
+Instead of solving the standard action-value function (Q function) with Bellman equations, deep convolutional neural network was used as a nonlinear function approximator. DeepMind also employed a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
 While a different network was trained for each game, the same architecture and hyperparameters were used across all of the games.
 Furthermore, no prior (or game specific) knowledge was used, but only the raw pixel values were fed to the network as inputs.
 DeepMind's major achievement was using extremely high-dimensional states (the visual input from the agent) and no information about the game rules to train an algorithm which could outperform skilled human players, and we aimed to replicate this in our project.
 
-For the actual implementation of DeepMind's DQN in Python and TensorFlow, we relied heavily on Chen's work, which was also inspired by DeepMind's DQN and applied the same model architecture and algorithm to the game Flappy Bird \cite{flappyBird}.
+For the actual implementation of our project, we built on the work of Chen (2015), which also relied on DeepMind's DQN and applied the same model architecture and algorithm to the game Flappy Bird \cite{flappyBird}.
+We sought to expand on his work by applying DeepMind's architecture to a more complicated setting.
+While Flappy Bird has only two possible actions and no opponents, Minecraft has a continuous action space and our setting includes zombies actively trying to kill the agent.
 
 
 
 
 \section{Minecraft and Project Malmo}
 
-For the setting of our project, we chose Minecraft, a popular sandbox video game that was released in 2011. It allows players to control an agent, through which they can explore the map, build structures, craft tools, and destroy computer-generated monsters.
+For the setting of our project, we chose Minecraft, a popular sandbox video game that was released in 2011. It allows players to control an agent, through which they can explore the map, build structures, craft tools, and destroy computer-generated zombies.
 Project Malmo is an open source platform for Minecraft created by Microsoft that offers an interface for researchers to experiment with different approaches to artificial intelligence by controlling an agent through Python scripts.
 
 Malmo is a useful environment for artificial intelligence research because it allows users to test endless situations within a relatively simple framework by  controlling agents' movements and environments via code.
@@ -59,6 +61,9 @@ Thus, the default in Malmo is for the player-controlled agent to not have any in
 This feature makes Malmo very convenient for reinforcement learning as this replicates the exact kind of environment we want for reinforcement learning: in order to maximize difficulty, the agent should be trained only from its own visual input.
 For example, the agent does not "know" that the \emph{attack} action kills zombies; it learns this through training.
 
+An additional constraint posed by Minecraft is the fact that the field of view is first person.
+In many or the Atari games tested by DeepMind or in Flappy Bird, the game gives a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
+For example,
 [{\bf Hiro: do you want to discuss Minecraft/Malmo implementation issues here? Like the lag issue?}]
 
 
@@ -97,14 +102,14 @@ In order to give the agent temporal information, we store the last four frames o
 
 \subsubsection{Reward}
 
-We assign the algorithm a reward of +1 for a successful hit on a monster and a reward of +5 for a successful kill.
+We assign the algorithm a reward of +1 for a successful hit on a zombie and a reward of +5 for a successful kill.
 There is also a reward of 0.03 for every frame for which it stays alive and a penalty of -1 for every time the agent gets hit. These are designed to train the agent's behavior to incentivize staying alive; holding the kill count equal, we wanted the agent to have a higher reward for staying alive longer.
 
 
 
 \subsubsection{Deep Q-Learning and Theory}
 
-We use Q-learning to have our agent learn a policy to best fight these monsters.
+We use Q-learning to have our agent learn a policy to best fight these zombies.
 We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
 \paragraph{}
 
@@ -143,14 +148,8 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray3.png}
-  \caption{1b}
+  \caption{1c}
   \label{fig:sfig3}
-\end{subfigure}
-\begin{subfigure}{.25\textwidth}
-  \centering
-  \includegraphics[scale=1.0]{./messigray4.png}
-  \caption{1b}
-  \label{fig:sfig4}
 \end{subfigure}
 \label{fig:fig}
 \end{figure}
