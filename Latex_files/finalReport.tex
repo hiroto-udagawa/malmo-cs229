@@ -118,27 +118,42 @@ Note that the target value used in iteration $i$ is calculated with the previous
 
 \subsubsection{Deep Q Network}
 
-Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle
+Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle fixed input size. Furthermore, the state(sequence) contains actions as well as images, but including action in the input layer requires multiple forward passes, getting the actiona-value funciton output for each action in the action space. To deal with these issues, we 1) only use the 3 most recent images instead of the entire sequence, and 2) use a network architecture in which only the image is fed to the input layer and outputs are estimates of Q value for each possible action. For the detailed explanation of the exact network architecture, see section 'Training'. 
+
+We instead use an architecture in which there is a separate output unit for each possible action, and only the state representation is an input to the neural network. The outputs cor- respond to the predicted Q-values of the individual actions for the input state. The main advantage of this type of architecture is the ability to compute Q-values for all possible actions in a given state with only a single forward pass through the network.
 
 \subsubsection{Experience Replay}
 
+Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since the subsequent(consecutive?) inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions will vary widely if we use only the recently obtained frames as inputs.    
+
+These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use the technique named experience replay. During gameplay keep a fixed number of most recent experiences {s, a, r, s'} in a replay memory, and train the network with random batches of experiences(states/sequences) sampled from the memory, rather than the most recently obtained states. 
+
 \subsubsection{$\epsilon$-greedy policy}
 
-the behaviour distribution is ofte e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
+ e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
 
 
 \subsection{Training}
 
 \subsubsection{Preprocessing}
 
+The raw pixel frames we can get through Malmo platform is 480 x 640 x 3 with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of 3 most recent frames, the final input dimension is 84 x 84 x 3. 
+
 \subsubsection{Model Architecture}
 
+The overall neural network consists of three convolutional layers and two fully connected layers. The input layer takes an 84 x 84 x 3 preprocessed image. The first hidden layer convolves the input with 32 filters of 8 x 8 with stride 4 and applies a rectifier nonlinearity. The second hidden layer convolves with 64 filters of 4 x 4 with stride 2, followed by a rectifier nonlinearity. The third layer convolves 64 filters of 3 x 3 with stride 1, again followed by a rectifier. The final hidden layer is fully-connected layer of 512 rectifier units. The output layer is a fully-connected linear layer (no rectifier) with an output node for each action in the action space. Our network has 5 output nodes. The following table summarizes the input and filter size at each layer of the network.
+
+\begin{tabular}{|l|l|l|l|l|l|}
+        \hline
+Layer & Input    & Filter size & Stride & Num Filters & Output   \\ \hline
+conv1 & 84x84x3  & 8x8         & 4      & 32          & 20x20x32 \\ \hline
+conv2 & 20x20x32 & 4x4         & 2      & 64          & 9x9x64   \\ \hline
+conv3 & 9x9x64   & 3x3         & 1      & 64          & 7x7x64   \\ \hline
+fc4   & 7x7x64   &             &        & 512         & 512      \\ \hline
+fc5   & 512      &             &        & 18          & 18     \\ \hline
+\end{tabular}
+  
 \subsubsection{Algorithm}
-
-must be able to learn from a scalar reward signal that is frequently sparse, noisy and delayed.
-
-The delay between actions and resulting rewards, which can be thousands of timesteps long, seems particularly daunting when compared to the direct association between inputs and targets found in supervised learning. Another issue is that most deep learning algorithms assume the data samples to be independent, while in reinforcement learning one typically encounters sequences of highly correlated states.
-
 
 We use Q-learning to have our agent learn a policy to best fight these zombies.
 We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
