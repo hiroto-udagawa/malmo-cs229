@@ -66,7 +66,9 @@ For example, the agent does not "know" that the \emph{attack} action kills zombi
 
 An additional constraint posed by Minecraft is the fact that the field of view is first person.
 In many or the Atari games tested by DeepMind or in Flappy Bird, the game gives a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
-For example,
+For example, the agent's first-person view prevents them from seeing zombies behind them and reacting, whereas a bird's-eye view would provide the agent with the positions of every zombie.
+This feature of Minecraft places a constraint on performance, but also approximates real training applications which depend solely on visual input, such as autonomous vehicles.
+
 [{\bf Hiro: do you want to discuss Minecraft/Malmo implementation issues here? Like the lag issue?}]
 
 
@@ -143,13 +145,13 @@ Note that the target value used in iteration $i$ is calculated with the previous
 
 \subsubsection{Deep Q Network}
 
-Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle fixed input size. Furthermore, the state(sequence) contains actions as well as images, but including action in the input layer requires multiple forward passes, getting the actiona-value funciton output for each action in the action space. To deal with these issues, we 1) only use the 3 most recent images instead of the entire sequence, and 2) use a network architecture in which only the image is fed to the input layer and outputs are estimates of Q value for each possible action. For the detailed explanation of the exact network architecture, see section 'Training'. 
+Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle fixed input size. Furthermore, the state(sequence) contains actions as well as images, but including action in the input layer requires multiple forward passes, getting the actiona-value funciton output for each action in the action space. To deal with these issues, we 1) only use the 3 most recent images instead of the entire sequence, and 2) use a network architecture in which only the image is fed to the input layer and outputs are estimates of Q value for each possible action. For the detailed explanation of the exact network architecture, see section 'Training'.
 
 \subsubsection{Experience Replay}
 
-Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since the subsequent(consecutive?) inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions will vary widely if we use only the recently obtained frames as inputs.    
+Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since the subsequent(consecutive?) inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions will vary widely if we use only the recently obtained frames as inputs.
 
-These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use the technique named experience replay. During gameplay keep a fixed number of most recent experiences {s, a, r, s'} in a replay memory, and train the network with random batches of experiences(states/sequences) sampled from the memory, rather than the most recently obtained states. 
+These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use the technique named experience replay. During gameplay keep a fixed number of most recent experiences {s, a, r, s'} in a replay memory, and train the network with random batches of experiences(states/sequences) sampled from the memory, rather than the most recently obtained states.
 
 \subsubsection{$\epsilon$-greedy policy}
 
@@ -187,24 +189,22 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
 \end{algorithm*}
 
 \begin{figure}[H]
+\centering
 \caption{Images of processed features}
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray1.png}
-  \caption{1a}
   \label{fig:sfig1}
 \end{subfigure}%
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray2.png}
-  \caption{1b}
   \label{fig:sfig2}
 \end{subfigure}
-%\vskip\baselineskip
+\vskip\baselineskip
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray3.png}
-  \caption{1c}
   \label{fig:sfig3}
 \end{subfigure}
 \label{fig:fig}
@@ -222,6 +222,39 @@ The agent kicks ass and takes names like Chuck Norris on cocaine.
     \item[Table 3: Learning rate under varying learning rates]
     \item[Table 4: Learning rate under varying difficulties]
 \end{description}
+
+
+\begin{figure}[H]
+\caption{Results on Easy Difficulty}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.2]{./kills.png}
+  \caption{1a}
+  \label{fig:sfig1}
+\end{subfigure}%
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.2]{./reward.png}
+  \caption{1b}
+  \label{fig:sfig2}
+\end{subfigure}
+\vskip\baselineskip
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.2]{./time.png}
+  \caption{1c}
+  \label{fig:sfig3}
+\end{subfigure}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.2]{./Qvalue.png}
+  \caption{1d}
+  \label{fig:sfig3}
+\end{subfigure}
+\label{fig:fig}
+\end{figure}
+
+
 
 We ran into the unexpected problem that...
 
@@ -249,7 +282,6 @@ This might involve different gradient algorithms or initial weights.
 \pagebreak
 \begin{thebibliography}{9}
 
-
 \bibitem{deepMind}
 Mnih, Volodymyr; Kavukcuoglu, Koray; Silver, David; Graves, Alex; Antonoglou, Ioannis; Wierstra, Daan; Riedmiller, Martin.
 \emph{Playing Atari with Deep Reinforcement Learning},
@@ -263,7 +295,12 @@ Matiisen, Tambet.
 \bibitem{flappyBird}
 Chen, Kevin.
 \emph{Deep Reinforcment Learning for Flappy Bird}
+2015.
 
+\bibitem{natureDeepMind}
+Volodymyr Mnih,	Koray Kavukcuoglu,	David Silver, Andrei A. Rusu, Joel Veness, Marc G. Bellemare, Alex Graves,	Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou,	Helen King,	Dharshan Kumaran, Daan Wierstra, Shane Legg, Demis Hassabis.
+\emph{Human-level control through deep reinforcement learning}.
+February 2015.
 
 \end{thebibliography}
 
