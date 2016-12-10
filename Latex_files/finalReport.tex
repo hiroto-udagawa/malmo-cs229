@@ -8,6 +8,9 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
 
 \graphicspath{{ ./ }}
 
@@ -77,23 +80,28 @@ For example,
 
 The agent begins in the middle of a completely flat room with a fixed number of randomly generated zombies. The room has a uniform color so that the algorithm will not have to account for differences in lighting and colors. The zombies automatically approach the agent and damage it if they get too close. The agent will be equipped with a sword to fend off the zombies. As the agent destroys zombies, new zombies continue to spawn (so that there is always a constant number of zombies), and the game continues to run until the character loses all of its health. At this time, the score will be calculated based on the total number of zombies that the character was able to kill and the scenario resets to the beginning.
 
-
-\subsection{MDP Formulation}
- 
-We formalize the reinforcement learning task with Markov Decision Process. The agent interacts with an environment by making observations and actions, and receiving rewards. At each iteration, the agent selects an action from the action space, A = {1, . . . , K }. Agent's action in turn changes the state the agent is in and the agent receives rewards based on the new state it enters. The reward often depends not only on the new state it just entered, but the entire sequence of actions and observations it made until it entered state in which it received rewards. Thus, to make an appropriate action in the current state, the agent needs information from previous actions and observations as well as the current observation. We therefore consider sequences of actions and observations st = x1, a1, x2, ..., a(t-1), xt. All such sequences are finite, thus we now have finite Markov decision process (MDP), where we use the sequence st as a distinct state at each time-step t.
-
-\subsubsection{Actions and States}
-
-The actions for this problem are the discrete movements of the agent (the agent can move forward, back, turn left, turn right, or remain stationary) as well as the ability to attack with a sword. To simplify the action space, the attack command was turned on the entire time, and the agent only chooses how to move at each time-step. Minecraft allows the agent to move and turn with different speed, but we only use five possible actions with fixed moving and turning speed.
-
-The observation at time-step t xt is an image of the player's vision represented by the pixels values. Project Malmo provides the functionality to retrieve the image from the screen. As stated earlier, the state at time-step t is a sequence of observations and actions made until and at time t. 
-
 \begin{figure}[H]
 \caption{Minecraft screenshot}
 \centering
 \includegraphics[scale=0.3]{./hiro_screenshot.png}
 \end{figure}
 
+\subsection{MDP Formulation}
+
+We formalize the reinforcement learning task with Markov Decision Process.
+The agent interacts with an environment by making observations and actions, and receiving rewards.
+At each iteration, the agent selects an action from the action space, $A = {1, . . . , K }$.
+Agent's action in turn changes the state the agent is in and the agent receives rewards based on the new state it enters.
+The reward often depends not only on the new state it just entered, but the entire sequence of actions and observations it made until it entered the current state.
+Thus, to make an appropriate action in the current state, the agent needs information from previous actions and observations as well as the current observation. We therefore consider sequences of actions and observations $s_t = x_1, a_1, x_2, ..., a_{t-1}, x_t$. All such sequences are finite; thus we now have finite Markov decision process (MDP), where we use the sequence $s_t$ as a distinct state at each time-step $t$.
+
+\subsubsection{Actions and States}
+
+The actions for this problem are the discrete movements of the agent (the agent can move forward, back, turn left, turn right, or remain stationary) as well as the ability to attack with a sword. To simplify the action space, the attack command was turned on the entire time, and the agent only chooses how to move at each time-step. Minecraft allows the agent to move and turn with different speed, but we only use five possible actions with fixed moving and turning speed.
+
+The observation at time-step $t$, $x_t$, is an image of the player's vision represented by the pixels values.
+Project Malmo provides the functionality to retrieve the image from the screen.
+As stated earlier, the state at time-step $t$ is a sequence of observations and actions made until and at time $t$.
 
 
 \subsubsection{Reward}
@@ -106,21 +114,33 @@ There is also a reward of 0.03 for every frame for which it stays alive and a pe
 
 \subsubsection{Reinforcement Learning Background}
 
-In reinforcement learning, the agent is to trained to maximize the aggregate future rewards. With the discount factor of \gamma, the future discounted return at time t is Rt = (HERE: sum of discounted returns), where T is the number of time-steps (or iterations) in that episode of the game. We define the optimal action-value function Q*(s, a) = max⇡ E [Rt|st = s, at = a, \pi], which is the maximum expected return achievable by following any strategy, after seeing some sequence s and then taking some action a, where \pi is a policy mapping sequences to actions (or distributions over actions).
+In reinforcement learning, the agent is to trained to maximize aggregate future rewards. With the discount factor of $\gamma$, the future discounted return at time $t$ is $R_t = \sum_{t' = t}^T \gamma^{t' - t}r_{t'}$, where $T$ is the number of time-steps (or iterations) in that episode of the game.
+We define the optimal action-value function
+$Q^{*}(s, a) = \max_\pi \mathbb{E}[R_t | s_t = s, a_t = a, \pi]$,
+which is the maximum expected return achievable by following any strategy,
+after seeing some sequence $s$ and then taking some action $a$, and where $\pi$ is a policy mapping sequences to actions (or distributions over actions).
 
-In simpler settings, the optimal policy is obtained by solving the Bellman equation iteratively, using the equation Qi+1(s,a) = E [r +   maxa0 Qi (s0 , a0 )|s, a]. However, maintaining estimates of action-value function for all sequences(states) is impossible and yields no generalization for newly encountered states. Instead, we use convolutional neural network as a nonlinear function approximator to estimate the action-value function. We train the neural network approximator Q(s,a,\theta) by minimizing a loss functions L_i(theta) defined for each iteration i:
+In simpler settings, the optimal policy is obtained by solving the Bellman equation iteratively, using the equation $Q_i^*(s,a) = \mathbb{E}[r +  \max_{a'} Q^* (s', a' )| s, a]$.
+However, maintaining estimates of action-value function for all sequences (states) is impossible and yields no generalization for newly encountered states.
+This is especially problematic in our setting, where the number of states is extremely large due to the high dimensionality of our input (i.e. pixels from the agent's visual input).
 
-Li (✓i) = Es,a⇠⇢(·) h(yi   Q (s, a; ✓i))2i
+Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. We train the neural network approximator $Q(s,a,\theta)$ by minimizing a loss functions $L_i(\theta)$ defined for each iteration $i$, (where $\theta$ are the Q-network weights)
 
-where yi = Es0⇠E [r +   maxa0 Q(s0, a0; ✓i 1)|s, a] is the target for iteration i and p(s, a), the behaviour distribution, is a distribution over states s and actions a. Note that the target value used in iteration i is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution. 
+\begin{equation*}
+    L_i(\theta_i) = \mathbb{E}_{s,a \sim \rho(·)} [(y_i - Q (s, a; \theta_i))^2]
+\end{equation*}
+
+
+where $y_i = \mathbb{E}_{s' \sim \epsilon}[r + \gamma \max_{a'} Q(s', a'; \theta_{i-1} | s, a]$ is the target for iteration $i$ and $\rho(s, a)$, the behaviour distribution, is a distribution over states $s$ and actions $a$.
+Note that the target value used in iteration $i$ is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution.
 
 \subsubsection{Deep Q Network}
 
-Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle  
+Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle
 
-\subsubsection{experience replay}
+\subsubsection{Experience Replay}
 
-\subsubsection{e-greedy policy}
+\subsubsection{$\epsilon$-greedy policy}
 
 the behaviour distribution is ofte e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
 
@@ -156,7 +176,7 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
         sample random transitions from $D$ \;
         update network \;
      }
-     \caption{Adapted from Matiisen, 2015}
+     \caption{Adapted from Mnih et al, 2015}
 \end{algorithm*}
 
 \begin{figure}[H]
@@ -173,7 +193,7 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
   \caption{1b}
   \label{fig:sfig2}
 \end{subfigure}
-\vskip\baselineskip
+%\vskip\baselineskip
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray3.png}
