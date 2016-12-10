@@ -95,7 +95,7 @@ for i in xrange(num_repeats):
     #Loop until mission ends:
     
     agent_host.sendCommand("chat /gamerule naturalRegeneration false")
-    agent_host.sendCommand("chat /difficulty ")
+    agent_host.sendCommand("chat /difficulty 1")
     monsters = 6
     while monsters > 0:
         i = random.randint(-15,15)
