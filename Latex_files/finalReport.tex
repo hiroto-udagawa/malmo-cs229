@@ -111,13 +111,18 @@ where yi = Es0⇠E [r +   maxa0 Q(s0, a0; ✓i 1)|s, a] is the target for iterat
 
 \subsubsection{Deep Q Network}
 
-Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle  
+Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle fixed input size. Furthermore, the state(sequence) contains actions as well as images, but including action in the input layer requires multiple forward passes, getting the actiona-value funciton output for each action in the action space. To deal with these issues, we 1) only use the 3 most recent images instead of the entire sequence, and 2) use a network architecture in which only the image is fed to the input layer and outputs are estimates of Q value for each possible action. For the detailed explanation of the exact network architecture, see section 'Training'. 
 
 \subsubsection{experience replay}
 
+Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since the subsequent(consecutive?) inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions will vary widely if we use only the recently obtained frames as inputs.    
+
+These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use the technique named experience replay. During gameplay keep a fixed number of most recent experiences {s, a, r, s'} in a replay memory, and train the network with random batches of experiences(states/sequences) sampled from the memory, rather than the most recently obtained states. 
+
 \subsubsection{e-greedy policy}
 
-the behaviour distribution is ofte e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
+
+ e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
 
 
 \subsection{Training}
@@ -127,10 +132,6 @@ the behaviour distribution is ofte e-greedy strategy that follows the greedy str
 \subsubsection{Model Architecture}
 
 \subsubsection{Algorithm}
-
-must be able to learn from a scalar reward signal that is frequently sparse, noisy and delayed.
-
-The delay between actions and resulting rewards, which can be thousands of timesteps long, seems particularly daunting when compared to the direct association between inputs and targets found in supervised learning. Another issue is that most deep learning algorithms assume the data samples to be independent, while in reinforcement learning one typically encounters sequences of highly correlated states.
 
 
 We use Q-learning to have our agent learn a policy to best fight these monsters.
