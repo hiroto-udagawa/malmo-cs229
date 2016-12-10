@@ -138,9 +138,9 @@ Note that the target value used in iteration $i$ is calculated with the previous
 
 Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle
 
-\subsubsection{experience replay}
+\subsubsection{Experience Replay}
 
-\subsubsection{e-greedy policy}
+\subsubsection{$\epsilon$-greedy policy}
 
 the behaviour distribution is ofte e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
 
@@ -176,7 +176,7 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
         sample random transitions from $D$ \;
         update network \;
      }
-     \caption{Adapted from Matiisen, 2015}
+     \caption{Adapted from Mnih et al, 2015}
 \end{algorithm*}
 
 \begin{figure}[H]
