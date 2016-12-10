@@ -78,7 +78,7 @@ For example,
 
 \subsection{Scenario}
 
-The agent begins in the middle of a completely flat room with a fixed number of randomly generated zombies. The room has a uniform color so that the algorithm will not have to account for differences in lighting and colors. The zombies automatically approach the agent and damage it if they get too close. The agent will be equipped with a sword to fend off the zombies. As the agent destroys zombies, new zombies continue to spawn (so that there is always a constant number of zombies), and the game continues to run until the character loses all of its health. At this time, the score will be calculated based on the total number of zombies that the character was able to kill and the scenario resets to the beginning.
+The agent begins in the middle of a completely flat room with a fixed number of randomly generated zombies. The room has a uniform color so that the algorithm will not have to account for differences in lighting and colors. The zombies automatically approach the agent and damage it if they get too close. The agent will be equipped with a sword to fend off the zombies. As the agent destroys zombies, new zombies continue to spawn (so that there is always a constant number of zombies), and the game continues to run until the character loses all of its health. The agent has no way of replenenishing its health, so its health will monotonically decrease over time. At this time, the score will be calculated based on the total number of zombies that the character was able to kill and the scenario resets to the beginning.
 
 \begin{figure}[H]
 \caption{Minecraft screenshot}
@@ -88,27 +88,34 @@ The agent begins in the middle of a completely flat room with a fixed number of 
 
 \subsection{MDP Formulation}
 
-We formalize the reinforcement learning task with Markov Decision Process.
+We formalize the reinforcement learning task a Markov Decision Process.
 The agent interacts with an environment by making observations and actions, and receiving rewards.
-At each iteration, the agent selects an action from the action space, $A = {1, . . . , K }$.
-Agent's action in turn changes the state the agent is in and the agent receives rewards based on the new state it enters.
+At each iteration, the agent selects an action from the action space, $A = {1, \dots , K }$.
+This action then changes the state the agent is in and the agent receives rewards based on the new state it enters.
 The reward often depends not only on the new state it just entered, but the entire sequence of actions and observations it made until it entered the current state.
-Thus, to make an appropriate action in the current state, the agent needs information from previous actions and observations as well as the current observation. We therefore consider sequences of actions and observations $s_t = x_1, a_1, x_2, ..., a_{t-1}, x_t$. All such sequences are finite; thus we now have finite Markov decision process (MDP), where we use the sequence $s_t$ as a distinct state at each time-step $t$.
+Thus, to make an appropriate action in the current state, the agent needs information from previous actions and observations as well as the current observation.
+We therefore consider sequences of actions and observations $s_t = x_1, a_1, x_2, ..., a_{t-1}, x_t$, where $x_t$ is the pixel values of the visual input from the agent at time $t$.
+All such sequences are finite; thus we now have finite Markov decision process (MDP), where we use the sequence $s_t$ as a distinct state at each time-step $t$.
 
 \subsubsection{Actions and States}
 
 The actions for this problem are the discrete movements of the agent (the agent can move forward, back, turn left, turn right, or remain stationary) as well as the ability to attack with a sword. To simplify the action space, the attack command was turned on the entire time, and the agent only chooses how to move at each time-step. Minecraft allows the agent to move and turn with different speed, but we only use five possible actions with fixed moving and turning speed.
 
-The observation at time-step $t$, $x_t$, is an image of the player's vision represented by the pixels values.
 Project Malmo provides the functionality to retrieve the image from the screen.
 As stated earlier, the state at time-step $t$ is a sequence of observations and actions made until and at time $t$.
 
 
 \subsubsection{Reward}
 
-We assign the algorithm a reward of +1 for a successful hit on a zombie and a reward of +5 for a successful kill.
-There is also a reward of 0.03 for every frame for which it stays alive and a penalty of -1 for every time the agent gets hit. These are designed to train the agent's behavior to incentivize staying alive; holding the kill count equal, we wanted the agent to have a higher reward for staying alive longer.
+We assign the algorithm the following reward structure:
+\begin{itemize}
+    \item +1 for a successful hit on a zombie
+    \item +5 for a successful kill
+    \item -1 for getting hit by a zombie
+    \item +0.03 for every frame in which the agent stays alive
+\end{itemize}
 
+The last reward is designed to train the agent's behavior to incentivize staying alive; holding the kill count equal, we wanted the agent to have a higher reward for staying alive longer.
 
 \subsection{Q-learning and Deep Q Network}
 
@@ -131,7 +138,7 @@ Instead, we use a convolutional neural network as a nonlinear function approxima
 \end{equation*}
 
 
-where $y_i = \mathbb{E}_{s' \sim \epsilon}[r + \gamma \max_{a'} Q(s', a'; \theta_{i-1} | s, a]$ is the target for iteration $i$ and $\rho(s, a)$, the behaviour distribution, is a distribution over states $s$ and actions $a$.
+Where $y_i = \mathbb{E}_{s' \sim \epsilon}[r + \gamma \max_{a'} Q(s', a'; \theta_{i-1} | s, a]$ is the target for iteration $i$ and $\rho(s, a)$, the behaviour distribution, is a distribution over states $s$ and actions $a$.
 Note that the target value used in iteration $i$ is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution.
 
 \subsubsection{Deep Q Network}
