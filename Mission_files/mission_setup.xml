@@ -24,7 +24,7 @@
 		</ServerHandlers>
 	</ServerSection>
 	<AgentSection mode="Survival">
-		<Name>Andrew</Name>
+		<Name>Chuck Norris on Cocaine</Name>
 		<AgentStart>
       <Placement x="0" y="207" z="-12" pitch="20" yaw="0"/>
 			<Inventory>
