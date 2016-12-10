@@ -19,19 +19,20 @@ filter3_dim = 3
 filter3_depth = 64
 filter3_stride = 1
 
-ACTIONS = 7
+ACTIONS = 5
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
+#OBSERVE = 300 # timesteps to observe before training
+
 #OBSERVE = 32 # timesteps to observe before training
-EXPLORE = 50000. # frames over which to anneal epsilon
+EXPLORE = 80000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
-INITIAL_EPSILON = 0.5 # starting value of epsilon
+INITIAL_EPSILON = 1.0 # starting value of epsilon
 #INITIAL_EPSILON = 0.077 # starting value of epsilon
-REPLAY_MEMORY = 10000 # number of previous transitions to remember
+REPLAY_MEMORY = 20000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
 
-FRAME_PER_ACTION = 1
-FRAMES = 4
+FRAMES= 3
 
 class DeepLearner:
     
@@ -39,6 +40,7 @@ class DeepLearner:
         self.sess = tf.InteractiveSession()      
         self.agent = DeepAgent()
         self.D = deque()
+        self.Holdout = deque()
         
         self.s, self.readout, h_fc1  = self.createNet();
         self.s_t = self.a_t = None
@@ -50,8 +52,8 @@ class DeepLearner:
         self.y = tf.placeholder("float", [None])
         readout_action = tf.reduce_sum(tf.mul(self.readout, self.a), reduction_indices=1)
         cost = tf.reduce_mean(tf.square(self.y - readout_action))
-        #self.train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
-        self.train_step = tf.train.RMSPropOptimizer(learning_rate=1e-6, decay=0.9, momentum=0.95).minimize(cost)
+        self.train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
+        #self.train_step = tf.train.RMSPropOptimizer(learning_rate=0.00025, decay=0.9, momentum=0.95).minimize(cost)
         
         self.saver = tf.train.Saver()
         self.sess.run(tf.initialize_all_variables())
@@ -63,7 +65,7 @@ class DeepLearner:
             print("Could not find old network weights")
           
     def weight_variable(self, shape):
-      initial = tf.truncated_normal(shape, stddev=0.1)
+      initial = tf.truncated_normal(shape, stddev=0.01)
       return tf.Variable(initial)
 
     def bias_variable(self, shape):
@@ -112,7 +114,7 @@ class DeepLearner:
         #a_file = open("logs/readout.txt", 'w')
         #h_file = open("logs/hidden.txt", 'w')
 
-        x_t = self.agent.resize( self.agent.getPixels(frame))
+        x_t = self.agent.resize(self.agent.getPixels(frame))
         #x_t = self.agent.threshold(x_t)
         x_t = x_t.reshape(image_dim, image_dim)
         
@@ -120,7 +122,7 @@ class DeepLearner:
         #terminal = ob[u'IsAlive']    
         terminal = False 
         
-        self.s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
+        self.s_t = np.stack((x_t, x_t, x_t), axis=2)
 
         # saving and loading networks
 
@@ -148,7 +150,7 @@ class DeepLearner:
         x_t1 = x_t1.reshape(image_dim, image_dim ,1)
         
         r_t = self.agent.getReward(ob)        
-        s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
+        s_t1 = np.append(x_t1, self.s_t[:, :, :FRAMES-1], axis=2)
         #cv2.imwrite('messigray.png',x_t1)
         
         #cv2.imwrite('messigray1.png', np.reshape(s_t1[:,:,0], (84,84)))
@@ -156,6 +158,17 @@ class DeepLearner:
         #cv2.imwrite('messigray3.png',np.reshape(s_t1[:,:,2], (84,84)))
         #cv2.imwrite('messigray4.png',np.reshape(s_t1[:,:,3], (84,84)))
         # store the transition in D
+        
+        if self.t < 2000:
+            self.Holdout.append((s_t1))
+        if self.t % 1000 == 0 and self.t >= 2000:
+            readout_batch = self.readout.eval(feed_dict = {self.s : list(self.Holdout)})
+            readout_batch = np.array(readout_batch)
+            print np.mean(np.amax(readout_batch, axis=1))
+            file = open("qvalue.txt", "a")
+            file.write(str(np.mean(np.amax(readout_batch, axis=1)))+ "\n")
+            file.close()
+
         self.D.append((self.s_t, self.a_t, r_t, s_t1, terminal))
 
         
@@ -199,6 +212,7 @@ class DeepLearner:
             self.saver.save(self.sess, 'networks/zombie-dqn', global_step = self.t)
 
         readout_t = self.readout.eval(feed_dict={self.s : [self.s_t]})[0]
+
         self.a_t = np.zeros([ACTIONS])
         if random.random() <= self.epsilon:
             #print("----------Random Action----------")
@@ -258,5 +272,5 @@ class DeepLearner:
                 "/ Q_MAX %e" % np.max(readout_t))
                 
         return action_index
-            
+   
         

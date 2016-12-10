@@ -105,7 +105,7 @@ for i in xrange(num_repeats):
     
     while world_state.is_mission_running:
         agent_host.sendCommand("attack 1")
-        time.sleep(0.03)
+        time.sleep(0.02)
         if len(world_state.observations) > 0 and len(world_state.video_frames) > 0:
             if first == True:   
                 ob = json.loads(world_state.observations[-1].text)                
