@@ -25,30 +25,21 @@
 
 \section{Introduction}
 
-In this project, we train an agent in the video game Minecraft with reinforcement learning to kill as many zombies as possible in a confined space. Our agent is only equipped with a sword to attack the zombies,  which can themselves attack and kill the agent.
-The objective is to have the agent learn what policies to execute based on the visual information it receives about the surroundings from the raw pixels of the game play screen and the reward structure we have designed.
-Using a convolutional neural network and Q-function reinforcement learning, the agent showed definite improvement in its ability to kill zombies.
-This project displays the promise of combining deep learning with reinforcement learning to achieve non-trivial tasks.
+In this project, we train an agent in the video game Minecraft to kill as many zombies and surivive as long as possible using reinfocement learning. Our agent is only equipped with a sword to attack the zombies, which can themselves attack and kill the agent. The objective is to have the agent learn what policies to execute based on the visual information it receives about the surroundings from the raw pixels of the game play screen and the reward structure we have designed.
 
-
-
-
-
+Ultimately, using a convolutional neural network and Q-function reinforcement learning, the agent showed definite improvement in its ability to kill zombies. This project displays the promise of combining deep learning with reinforcement learning to achieve non-trivial tasks.
 
 \section{Related Work}
 
-There have been several projects in this area which we drew upon for our project.
+There have been several research projects in this area which we drew upon for our project.
 The major inspiration for our work was DeepMind's 2013 paper on deep reinforcement learning, in which the agent was trained with a single model architecture (Deep Q Learning) that uses a convolutional neural network to perform a variant of Q-learning, and successfully played 7 different Atari 2600 games, in a few of which the agent outperformed human experts \cite{deepMind}.
-Instead of solving the standard action-value function (Q function) with Bellman equations, deep convolutional neural network was used as a nonlinear function approximator. DeepMind also employed a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
+Instead of solving the standard action-value function (Q function) with Bellman equations, a deep convolutional neural network was used as a nonlinear function approximator. DeepMind also employed a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
 While a different network was trained for each game, the same architecture and hyperparameters were used across all of the games.
 Furthermore, no prior (or game specific) knowledge was used, but only the raw pixel values were fed to the network as inputs.
 DeepMind's major achievement was using extremely high-dimensional states (the visual input from the agent) and no information about the game rules to train an algorithm which could outperform skilled human players, and we aimed to replicate this in our project.
 
 For the actual implementation of our project, we built on the work of Chen (2015), which also relied on DeepMind's DQN and applied the same model architecture and algorithm to the game Flappy Bird \cite{flappyBird}.
-We sought to expand on his work by applying DeepMind's architecture to a more complicated setting.
-While Flappy Bird has only two possible actions and no opponents, Minecraft has a continuous action space and our setting includes zombies actively trying to kill the agent.
-
-
+We sought to expand on his work by applying DeepMind's architecture to a more complicated setting. While Flappy Bird has only two possible actions and no opponents, Minecraft has a continuous action space and our setting includes zombies actively trying to kill the agent.
 
 
 \section{Minecraft and Project Malmo}
@@ -56,20 +47,11 @@ While Flappy Bird has only two possible actions and no opponents, Minecraft has 
 For the setting of our project, we chose Minecraft, a popular sandbox video game that was released in 2011. It allows players to control an agent, through which they can explore the map, build structures, craft tools, and destroy computer-generated zombies.
 Project Malmo is an open source platform for Minecraft created by Microsoft that offers an interface for researchers to experiment with different approaches to artificial intelligence by controlling an agent through Python scripts.
 
-Malmo is a useful environment for artificial intelligence research because it allows users to test endless situations within a relatively simple framework by  controlling agents' movements and environments via code.
-By combining different states, actions, and spaces, researchers can create different environments and define various tasks for which the agent trains with reinforcement learning.
+Malmo is a useful environment for artificial intelligence research because it allows users to test endless situations within a relatively simple framework by controlling agents' movements and environments via code. By combining different states, actions, and spaces, researchers can create different environments and define various tasks for which the agent trains with reinforcement learning.
 
-As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed Malmo to be an interface with Minecraft, but not to provide the agent with any information about Minecraft.
-Thus, the default in Malmo is for the player-controlled agent to not have any information about its environment or the rules of the game.
-This feature makes Malmo very convenient for reinforcement learning as this replicates the exact kind of environment we want for reinforcement learning: in order to maximize difficulty, the agent should be trained only from its own visual input.
-For example, the agent does not "know" that the \emph{attack} action kills zombies; it learns this through training.
+As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed the agents who are deployed in Malmo to be a separate entity from the Minecraft world that tehy reside in. This means that the agent cannot manipulate the world, and the only information our algorithm can utilize are observations that the agent directly experiences from its direct environment. 
 
-An additional constraint posed by Minecraft is the fact that the field of view is first person.
-In many or the Atari games tested by DeepMind or in Flappy Bird, the game gives a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
-For example,
-[{\bf Hiro: do you want to discuss Minecraft/Malmo implementation issues here? Like the lag issue?}]
-
-
+This makes Malmo a difficult but interesting platform to build upon. Minecraft is designed to be a rough representation of the real world, and the agents in Malmo are rough representations of human beings. Thus our agent cannot stop time, while it calculates it's next action, and instead it has to train a neural network and quickly decide it's next action in real time. Furthermore, the agent is trained on its first-person visual input, which means in order to know what's behind, he must turn around. This contrasts many of the Atari games tested by DeepMind or in Flappy Bird, where the game provides a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
 
 
 \section{Method}
@@ -78,7 +60,7 @@ For example,
 
 \subsection{Scenario}
 
-The agent begins in the middle of a completely flat room with a fixed number of randomly generated zombies. The room has a uniform color so that the algorithm will not have to account for differences in lighting and colors. The zombies automatically approach the agent and damage it if they get too close. The agent will be equipped with a sword to fend off the zombies. As the agent destroys zombies, new zombies continue to spawn (so that there is always a constant number of zombies), and the game continues to run until the character loses all of its health. At this time, the score will be calculated based on the total number of zombies that the character was able to kill and the scenario resets to the beginning.
+The agent begins in the middle of a completely flat room with a fixed number of randomly generated zombies. The room has uniform color and lighting so that the algorithm will not have to account these differences. The zombies automatically approach the agent and damage it if they get too close. The agent will be equipped with a sword to fend off the zombies. As the agent destroys zombies, new zombies continue to spawn (so that there is always a constant number of zombies), and the game continues to run until the character loses all of its health. At this time, the score will be calculated based on the total number of zombies that the character was able to kill and the scenario resets to the beginning.
 
 \begin{figure}[H]
 \caption{Minecraft screenshot}
@@ -231,8 +213,6 @@ Additionally, researchers could focus on improving DeepMind's convolutional neur
 This might involve different gradient algorithms or initial weights.
 
 \end{multicols}
-
-
 
 
 
