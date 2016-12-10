@@ -1,0 +1,215 @@
+Outline - Final Report
+
+1. Introduction
+    - add few sentences on how/why this is new work
+    - add few sentences on why this matters
+
+2. Related work
+    - DeepMind's Nature paper
+    - Flappy Bird
+
+3. Malmo
+    esp. how it's different from other simulators
+    (i.e. more constrained)
+
+4. Methods
+    i.) Scenario
+        Setting: room description, inventory
+        Objective: kill zombies until...?
+        Other Minecraft-specific issues
+        Include screenshot from game (if space)
+
+    ii.) MDP Formulation
+        1. Actions
+        2. States
+        3. Reward
+        4. Deep Q-Learning and Theory
+	    - Overview of theory (e.g. convnets and being e-greedy)
+	    - Brief overview of feature extraction/training
+
+5. Results and Analysis
+    i.) Graphs, tables
+    ii.) Analysis of methods/results over different experiments
+        - Discussion of results, which method worked
+        - Explanation/theory for which method worked best
+        - Issues/problems
+
+6. Conclusions and Future work
+
+7. References
+---------------------------------------------------------------------
+
+Other approaches
+
+DM short:
+
+Background
+	-environment E
+	-action A = {1,...,K}
+	-image xt
+	-gives MDP
+	-maximize future reward, Rt = sum gamma return
+	-Q(s,a):  the maximum expected return achievable by following any strategy, 
+	 after seeing some sequence s and then taking some action
+	-Bellman equation: 
+	 if the optimal value Q⇤(s',a') of the sequence s' at the next time-step was known
+	 for all possible actions a', then the optimal strategy is to select the action a0
+   	 maximizing the expected value of r +  Q⇤(s', a'),
+	
+	-in most basic case, we solve the bellman equation with interative update
+	
+	-Here: we use nonlinear function approximator, NN (ConvNet specifically)
+		-show the Loss function L
+		-y is the target for iteration i and p(s, a) is a probability distribution over 
+		 sequences s and actions a. 
+		 The parameters from the previous iteration are held fixed when optimising the 
+		 loss function Li
+
+		-optimise the loss function with stochastic gradient descent 
+		 If the weights are updated after every time-step, and the expectations are replaced
+     		 by single samples from the behaviour distribution and the emulator E respectively, 
+  		 then we arrive at the familiar Q-learning algorithm.
+		-model free
+		-off policy
+
+ 	 	-In practice, the behaviour distribution is often selected by an e-greedy strategy 
+		 that follows the greedy strategy with probability 1-e and selects a random action 
+		 with probability e.
+
+Deep RL
+	-connect a reinforcement learning algorithm to a deep neural network which operates directly
+	 on RGB images and efficiently process training data by using stochastic gradient updates.
+	-experience replay
+		-agent’s experiences at each time-step, et = (st, at, rt, st+1) in a data-set 
+		 D = e1 , ..., eN , pooled over many episodes into a replay memory
+		-minibatch update 
+		-After performing experience replay, the agent selects and executes an action 
+		 according to an e-greedy policy.
+	-our Q-function instead works on fixed length representation of histories produced 
+	 by a function  phi.
+	-Advantages:
+		-each step may be used for multiple weight updates
+		-randomizing breaks sample correlation
+		- By using experience replay the behavior distribution is averaged over many of 
+		  its previous states, smoothing out learning and avoiding oscillations or divergence  		     
+		  in the parameters.
+
+		-In practice, our algorithm only stores the last N experience tuples in the replay
+		 memory, and samples uniformly at random from D when performing updates.
+
+Preprocessing
+
+
+
+DM nature article:
+
+Intro
+	-We consider tasks in which the agent interacts with an environment through a sequence of 
+	 observations, actions and rewards. The goal of the agent is to select actions in a fashion 	     
+	 that maximizes cumulative future reward.
+	-More formally, we use a deep convolutional neural network to approximate the optimal
+	 action-value function Q(s,a)
+
+	-Problem: correlation (which leads to divergence
+	-Fix:
+		-Experience replay
+		-only periodically update the iterative update of Q functioni
+
+	-approximate actiona-value function Q depends on the weights in interation i 
+	-Experience replay: et  (st,at,rt,st+1) at each time-step t in a data set Dt={e1,...,et}. 
+	 During learning, we apply Q-learning updates, on samples (or minibatches) of experience 
+	 (s,a,r,s') ~ U(D), drawn uniformly at random from the pool of stored samples. 
+	-Loss:
+		
+
+Method
+	-preprocessing
+		-function phi
+			-rescale to 84x84 
+			-applied to m most recent frames and stacks them to produce the input to the			     
+			 Q-function, in which m = 4, 
+	-Architecture
+		-there is a separate output unit for each possible action, and only the state 
+		 representation(preprocessed image) is an input to the neural network.
+		-The input: 84 x 84 x 4 image preprocessed image. 
+		-1st hidden conv layer: 32 filters of 8 x 8 with stride 4 + relu 
+		-2nd hidden conv layer: 64 filters of 4 x 4 with stride 2 + relu 
+		-3rd hidden conv layer: 64 filters of 3 x 3 with stride 1 + relu 
+		-final hidden layer: fully-connected 512 rectifier units
+		-The output layer: fully-connected linear layer(no relu) with a single output 
+		 for each valid action. 
+
+	-Training
+		-the same network architecture,learning algorithm and hyperparameter settings for
+		 different games but each games gets own weight(network)
+		-RMSProp algorithm with minibatches of size 32 
+		-behavior policy is e-greedy with e annealed linearly from 1.0 to 0.1 over the first
+		 million frames, and fixed at 0.1 thereafter 
+		-total of 50 million frames
+		-replay memory of 1 million most recent frames 
+
+	-Algorithm
+		-sequences of actions and observations, st=x1,a1,x2,:::,at-1,xt, are input to the
+		 algorithm
+		-MDP
+		-aggregate future return
+		-Bellman eqn
+		-We don't actually try to solve the equation. Instead we use NN,
+		-A Q-network can be trained by adjusting the parameters hi at iteration i to 
+		 reduce the mean-squared error in the Bellman equation, where the optimal target
+		 values r+max_a Q(s',a') are substituted with approximate target values 
+		 r+max_a Q(s',a')
+		-
+
+Flappy Bird
+	
+
+
+---------------------------------------------------------------------
+My write up
+
+2. Related work
+
+            
+    - DeepMind's Nature paper
+    - Flappy Bird
+
+The major inspiration for our work was DeepMind's 2013 paper on deep reinforcement learning, in which  
+the agent was trained with a single model architecture (Deep Q Learning) that uses convolutional neural
+network to perform a variant of Q-learning, and successfully played 7 differnt Atari 2600 games, in a 
+few of whichthe agent outperformed human experts. Instead of solving the standard action-value function
+(Q function) with Bellman equation, deep convolutional neural network was used as a nonlinear function 
+approximator, along with a biology inspired technique known as experience replay, which attempts to 
+fix the divergence due to correlation between sequential inputs. While a different network was trained
+for each game, the same architecture and hyperparamters were used across all of the games. Furthermore,
+no prior (or game specific) knowledge was used, but only the raw pixel values were fed to the network 
+as inputs.
+
+For the actual implementation of DeepMind's DQN in Python and TensorFlow , we relied heavily on Chen's 
+work, which was also inspired by DeepMind's DQN and applied the same model architecture and algorithm to
+the game Flappy Bird.    
+
+
+4. Methods
+    i.) Scenario
+        Setting: room description, inventory
+        Objective: kill zombies until...?
+        Other Minecraft-specific issues
+        Include screenshot from game (if space)
+
+    ii.) MDP Formulation
+        1. Actions
+        2. States
+        3. Reward
+        4. Deep Q-Learning and Theory
+            - Overview of theory (e.g. convnets and being e-greedy)
+            - Brief overview of feature extraction/training
+
+
+	
+
+
+
+
+
+
