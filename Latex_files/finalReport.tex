@@ -11,6 +11,10 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage{tabu}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage{caption}
 
 \graphicspath{{ ./ }}
 
@@ -56,7 +60,7 @@ Project Malmo is an open source platform for Minecraft created by Microsoft that
 
 Malmo is a useful environment for artificial intelligence research because it allows users to test endless situations within a relatively simple framework by controlling agents' movements and environments via code. By combining different states, actions, and spaces, researchers can create different environments and define various tasks for which the agent trains with reinforcement learning.
 
-As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed the agents who are deployed in Malmo to be a separate entity from the Minecraft world that tehy reside in. This means that the agent cannot manipulate the world, and the only information our algorithm can utilize are observations that the agent directly experiences from its direct environment. 
+As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed the agents who are deployed in Malmo to be a separate entity from the Minecraft world that tehy reside in. This means that the agent cannot manipulate the world, and the only information our algorithm can utilize are observations that the agent directly experiences from its direct environment.
 
 This makes Malmo a difficult but interesting platform to build upon. Minecraft is designed to be a rough representation of the real world, and the agents in Malmo are rough representations of human beings. Thus our agent cannot stop time, while it calculates it's next action, and instead it has to train a neural network and quickly decide it's next action in real time. Furthermore, the agent is trained on its first-person visual input, which means in order to know what's behind, he must turn around. This contrasts many of the Atari games tested by DeepMind or in Flappy Bird, where the game provides a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
 
@@ -119,11 +123,11 @@ $Q^{*}(s, a) = \max_\pi \mathbb{E}[R_t | s_t = s, a_t = a, \pi]$,
 which is the maximum expected return achievable by following any strategy,
 after seeing some sequence $s$ and then taking some action $a$, and where $\pi$ is a policy mapping sequences to actions (or distributions over actions).
 
-In simpler settings, the optimal policy is obtained by solving the Bellman equation iteratively, using the equation $Q_i^*(s,a) = \mathbb{E}[r +  \max_{a'} Q^* (s', a' )| s, a]$.
+In simpler settings, the optimal policy is obtained by solving the Bellman equation iteratively, using the equation $Q_{i+1}^*(s,a) = \mathbb{E}[r +  \max_{a'} Q_i^* (s', a' )| s, a]$, where $i$ is the current iteration.
 However, maintaining estimates of action-value function for all sequences (states) is impossible and yields no generalization for newly encountered states.
-This is especially problematic in our setting, where the number of states is extremely large due to the high dimensionality of our input (i.e. pixels from the agent's visual input).
+This is especially problematic in our setting, where the number of states is extremely large due to the high dimensionality of our input (i.e. pixels from the agent's visual feed).
 
-Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. We train the neural network approximator $Q(s,a,\theta)$ by minimizing a loss functions $L_i(\theta)$ defined for each iteration $i$, (where $\theta$ are the Q-network weights)
+Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. We train the neural network approximator $Q(s,a,\theta)$ by minimizing a loss functions $L_i(\theta)$ (where $\theta$ are the Q-network weights)
 
 \begin{equation*}
     L_i(\theta_i) = \mathbb{E}_{s,a \sim \rho(·)} [(y_i - Q (s, a; \theta_i))^2]
@@ -154,44 +158,53 @@ These issues can lead to neural network taking too long to converge, or being ve
 
 \subsubsection{Preprocessing}
 
-The raw pixel frames we can get through Malmo platform is 480 x 640 x 3 with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of 3 most recent frames, the final input dimension is 84 x 84 x 3. 
+The raw pixel frames we can get through Malmo platform is 480 x 640 x 3 with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of 3 most recent frames, the final input dimension is 84 x 84 x 3.
 
 \subsubsection{Model Architecture}
 
 The overall neural network consists of three convolutional layers and two fully connected layers. The input layer takes an 84 x 84 x 3 preprocessed image. The first hidden layer convolves the input with 32 filters of 8 x 8 with stride 4 and applies a rectifier nonlinearity. The second hidden layer convolves with 64 filters of 4 x 4 with stride 2, followed by a rectifier nonlinearity. The third layer convolves 64 filters of 3 x 3 with stride 1, again followed by a rectifier. The final hidden layer is fully-connected layer of 512 rectifier units. The output layer is a fully-connected linear layer (no rectifier) with an output node for each action in the action space. Our network has 5 output nodes. The following table summarizes the input and filter size at each layer of the network.
 
-\begin{tabular}{|l|l|l|l|l|l|}
-        \hline
-Layer & Input    & Filter size & Stride & Num Filters & Output   \\ \hline
-conv1 & 84x84x3  & 8x8         & 4      & 32          & 20x20x32 \\ \hline
-conv2 & 20x20x32 & 4x4         & 2      & 64          & 9x9x64   \\ \hline
-conv3 & 9x9x64   & 3x3         & 1      & 64          & 7x7x64   \\ \hline
-fc4   & 7x7x64   &             &        & 512         & 512      \\ \hline
-fc5   & 512      &             &        & 18          & 18     \\ \hline
-\end{tabular}
-  
-\subsubsection{Algorithm}
-
-We use Q-learning to have our agent learn a policy to best fight these zombies.
-We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
-\paragraph{}
+\begin{minipage}{\columnwidth}
+\captionof{table}{Input and Filter Sizes of Neural Network}
+\begin{tabu} to \columnwidth {XX[1.2]XXXX[1.2]}
+    \hline
+    Layer & Input    & Filter size & Stride & Num Filters & Output   \\[9pt] \hline
+    conv1 & 84x84x3  & 8x8         & 4      & 32          & 20x20x32 \\ \hline
+    conv2 & 20x20x32 & 4x4         & 2      & 64          & 9x9x64   \\ \hline
+    conv3 & 9x9x64   & 3x3         & 1      & 64          & 7x7x64   \\ \hline
+    fc4   & 7x7x64   &             &        & 512         & 512      \\ \hline
+    fc5   & 512      &             &        & 18          & 18     \\ \hline
+\end{tabu}
+\end{minipage}
 
 
 \begin{algorithm*}[H]
      \SetAlgoLined
-     initialize Q function with random weights \;
-     observe initial state $S$ \;
+     initialize $Q$ function with random weights \;
+     initialize replay memory $\mathcal{D}$ \;
      \Repeat{terminated} {
+     observe initial state $S$ \;
+        \While{agent is alive} {
         with probability $\epsilon$ generate random action \;
-        otherwise select $a = \arg\max_{a'} Q(s,a')$ \;
+        otherwise select $a = \arg\max_{a'} Q^*(s,a',\theta)$ \;
         carry out action $a$ \;
-        observe reward $r$ and new state $s'$ \;
-        update $D$ with new data: $<s,a,r,s'>$ \;
+        observe reward $r$ and new image $x'$ \;
+        preprocess $x'$ and $a$ into $\phi'$
+        update $\mathcal{D}$ with new data: $<\phi,a,r,\phi'>$ \;
         sample random transitions from $D$ \;
-        update network \;
+        Update the Q Network weights to $\theta'$: \;
+        \Indp
+        Set $y = \mathbb{E}[r + \gamma\max_{a'}Q(s',a',\theta)] $\;
+        Perform gradient descent on $L(\theta) = \mathbb{E}[(y - Q(s,a,\theta))^2]$  \;
+        }
      }
      \caption{Adapted from Mnih et al, 2015}
 \end{algorithm*}
+
+\subsubsection{Algorithm}
+We use Q-learning to have our agent learn a policy to best fight these zombies.
+We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
+
 
 \begin{figure}[H]
 \centering
@@ -235,26 +248,26 @@ The agent kicks ass and takes names like Chuck Norris on cocaine.
   \centering
   \includegraphics[scale=0.27]{./kills.png}
   \caption{}
-  \label{fig:sfig1}
+  \label{fig:sfig4}
 \end{subfigure}%
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=0.27]{./reward.png}
   \caption{}
-  \label{fig:sfig2}
+  \label{fig:sfig5}
 \end{subfigure}
 \vskip\baselineskip
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=0.27]{./time.png}
   \caption{}
-  \label{fig:sfig3}
+  \label{fig:sfig6}
 \end{subfigure}
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=0.27]{./Qvalue.png}
   \caption{}
-  \label{fig:sfig3}
+  \label{fig:sfig7}
 \end{subfigure}
 \label{fig:fig}
 \end{figure}
