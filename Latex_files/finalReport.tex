@@ -79,6 +79,7 @@ The agent begins in the middle of a completely flat room with a fixed number of 
 \caption{Minecraft screenshot}
 \centering
 \includegraphics[scale=0.3]{./hiro_screenshot.png}
+\label{fig:screenShot}
 \end{figure}
 
 \subsection{MDP Formulation}
@@ -127,7 +128,7 @@ In simpler settings, the optimal policy is obtained by solving the Bellman equat
 However, maintaining estimates of action-value function for all sequences (states) is impossible and yields no generalization for newly encountered states.
 This is especially problematic in our setting, where the number of states is extremely large due to the high dimensionality of our input (i.e. pixels from the agent's visual feed).
 
-Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. We train the neural network approximator $Q(s,a,\theta)$ by minimizing a loss functions $L_i(\theta)$ (where $\theta$ are the Q-network weights)
+Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. Let $\theta$ be the neural network weights We train the neural network approximator $Q(s,a,\theta)$ by minimizing the loss function $L_i(\theta)$:
 
 \begin{equation*}
     L_i(\theta_i) = \mathbb{E}_{s,a \sim \rho(·)} [(y_i - Q (s, a; \theta_i))^2]
@@ -135,38 +136,48 @@ Instead, we use a convolutional neural network as a nonlinear function approxima
 
 
 Where $y_i = \mathbb{E}_{s' \sim \epsilon}[r + \gamma \max_{a'} Q(s', a'; \theta_{i-1} | s, a]$ is the target for iteration $i$ and $\rho(s, a)$, the behaviour distribution, is a distribution over states $s$ and actions $a$.
-Note that the target value used in iteration $i$ is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution.
+Note that the target value used in iteration $i$ is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution (see section 4.3.3 below).
 
 \subsubsection{Deep Q Network}
 
-Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle fixed input size. Furthermore, the state(sequence) contains actions as well as images, but including action in the input layer requires multiple forward passes, getting the actiona-value funciton output for each action in the action space. To deal with these issues, we 1) only use the 3 most recent images instead of the entire sequence, and 2) use a network architecture in which only the image is fed to the input layer and outputs are estimates of Q value for each possible action. For the detailed explanation of the exact network architecture, see section 'Training'.
+We use a convolutional neural network to make predictions since our inputs are images. Our previous MDP formulation for Q-learning implies training the weights using the entire sequence of actions and observations, and making predictions using a state-action pair.
+In practice, we slightly modify this previous formulation for two reasons.
 
-We instead use an architecture in which there is a separate output unit for each possible action, and only the state representation is an input to the neural network. The outputs cor- respond to the predicted Q-values of the individual actions for the input state. The main advantage of this type of architecture is the ability to compute Q-values for all possible actions in a given state with only a single forward pass through the network.
+First, neural networks can only handle fixed input size and so we only use the 3 most recent images instead of the entire sequence.
+
+Second, the previous formulation would require doing a 'forward-pass' of the network (i.e. making a prediction using the neural network) every time you wanted to evalute the Q-value of a state-action pair. For a given state and a set of $k$ actions, this would require $k$ forward-passes.
+Instead, we use a network architecture in which only the image is fed to the input layer and outputs are estimates of $Q$-value for each possible action, and so our state is made up of only an image, rather than an image-action pair. The outputs correspond to the predicted $Q$-values of the individual actions for the input state. For the detailed explanation of the exact network architecture, see section 4.4.
 
 \subsubsection{Experience Replay}
 
-Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since the subsequent(consecutive?) inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions will vary widely if we use only the recently obtained frames as inputs.
+Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since consecutive inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions and will vary widely if we use only the recently obtained frames as inputs.
 
-These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use the technique named experience replay. During gameplay keep a fixed number of most recent experiences {s, a, r, s'} in a replay memory, and train the network with random batches of experiences(states/sequences) sampled from the memory, rather than the most recently obtained states.
+These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use 'experience replay' technique. During gameplay we keep a fixed number of most recent experiences $\{s, a, r, s'\}$ in a 'replay memory', and train the network with random batches of experiences (processed states and actions) sampled from the memory, rather than the most recently obtained states.
 
 \subsubsection{$\epsilon$-greedy policy}
 
- e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
+One of the fundamental trade-offs in reinforcment learning is exploration vs. exploitation. If the algorithm starts in a certain state and only chooses actions which optimize the Q function based on what it has seen, it could get stuck in a local minimum of the loss function since its experiences would be relatively limited.
+
+Randomly choosing an action which the algorithm does \emph{not} believe would optimize the Q function would let the algorithm gather more data about the environment. An $\epsilon$-greedy strategy chooses the optimal action ('the greedy strategy') with probability $1-\epsilon$ and selects a random action with probability $\epsilon$.
+We employ an $\epsilon$-greedy strategy but anneal $\epsilon$ so that it decreases from \bf *** \rm to \bf *** \rm over a period of \bf *** \rm.
 
 
 \subsection{Training}
 
 \subsubsection{Preprocessing}
 
-The raw pixel frames we can get through Malmo platform is 480 x 640 x 3 with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of 3 most recent frames, the final input dimension is 84 x 84 x 3.
+The raw pixel frames we received through the Malmo platform are 480 x 640 x 3 in dimension with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of the 3 most recent frames, the final input dimension is 84 x 84 x 3.
 
 \subsubsection{Model Architecture}
 
-The overall neural network consists of three convolutional layers and two fully connected layers. The input layer takes an 84 x 84 x 3 preprocessed image. The first hidden layer convolves the input with 32 filters of 8 x 8 with stride 4 and applies a rectifier nonlinearity. The second hidden layer convolves with 64 filters of 4 x 4 with stride 2, followed by a rectifier nonlinearity. The third layer convolves 64 filters of 3 x 3 with stride 1, again followed by a rectifier. The final hidden layer is fully-connected layer of 512 rectifier units. The output layer is a fully-connected linear layer (no rectifier) with an output node for each action in the action space. Our network has 5 output nodes. The following table summarizes the input and filter size at each layer of the network.
+The overall neural network consists of three convolutional layers and two fully connected layers. The input layer takes an 84 x 84 x 3 preprocessed image. The first hidden layer convolves the input with 32 filters of 8 x 8 with stride 4 and applies a rectifier nonlinearity. The second hidden layer convolves with 64 filters of 4 x 4 with stride 2, followed by a rectifier nonlinearity. The third layer convolves 64 filters of 3 x 3 with stride 1, again followed by a rectifier. The final hidden layer is a fully-connected layer of 512 rectifier units. The output layer is a fully-connected linear layer (no rectifier) with an output node for each action in the action space. Our network has 5 output nodes. The following table summarizes the input and filter size at each layer of the network.
+\newline
 
 \begin{minipage}{\columnwidth}
 \captionof{table}{Input and Filter Sizes of Neural Network}
-\begin{tabu} to \columnwidth {XX[1.2]XXXX[1.2]}
+{
+\centering
+\begin{tabu} to 0.9\columnwidth {X[0.6]X[1.2]XX[0.6]XX[1.2]}
     \hline
     Layer & Input    & Filter size & Stride & Num Filters & Output   \\[9pt] \hline
     conv1 & 84x84x3  & 8x8         & 4      & 32          & 20x20x32 \\ \hline
@@ -175,6 +186,7 @@ The overall neural network consists of three convolutional layers and two fully 
     fc4   & 7x7x64   &             &        & 512         & 512      \\ \hline
     fc5   & 512      &             &        & 18          & 18     \\ \hline
 \end{tabu}
+}
 \end{minipage}
 
 
@@ -185,14 +197,17 @@ The overall neural network consists of three convolutional layers and two fully 
      \Repeat{terminated} {
      observe initial state $S$ \;
         \While{agent is alive} {
-        with probability $\epsilon$ generate random action \;
-        otherwise select $a = \arg\max_{a'} Q^*(s,a',\theta)$ \;
+        \DontPrintSemicolon with probability $\epsilon$: \;
+        \PrintSemicolon \Indp generate random action $a$ \;
+        \DontPrintSemicolon \Indm otherwise: \;
+        \PrintSemicolon \Indp select $a = \arg\max_{a'} Q^*(s,a',\theta)$ \;
+        \Indm
         carry out action $a$ \;
         observe reward $r$ and new image $x'$ \;
-        preprocess $x'$ and $a$ into $\phi'$
+        preprocess $x'$ into $\phi'$ \;
         update $\mathcal{D}$ with new data: $<\phi,a,r,\phi'>$ \;
         sample random transitions from $D$ \;
-        Update the Q Network weights to $\theta'$: \;
+        update the Q Network weights to $\theta'$: \;
         \Indp
         Set $y = \mathbb{E}[r + \gamma\max_{a'}Q(s',a',\theta)] $\;
         Perform gradient descent on $L(\theta) = \mathbb{E}[(y - Q(s,a,\theta))^2]$  \;
@@ -225,22 +240,16 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
   \includegraphics[scale=1.0]{./messigray3.png}
   \label{fig:sfig3}
 \end{subfigure}
-\label{fig:fig}
+\label{fig:processedPics}
 \end{figure}
 
-
-
 \section{Results and Analysis}
+We chose four metrics of agent performance: kills per life, time alive, total reward, and average q-value. 
 
-The agent kicks ass and takes names like Chuck Norris on cocaine.
+On all four metrics, the results shown in Figure \ref{fig:easyResults} display clear improvement in the agent's performance across all four metrics.
+Kills per life increased form an initial low of between zero to two to around seven while the agent's lifespan doubled from 100 to around 200 frames. The algorithm was clearly very successful at optimizing the given reward structure: the lifetime reward increased from below zero to around 250, while at some points it achieved well over 500.
 
-\begin{description}
-    \item[Table 1: Learning rate under varying Reward Structures]
-    \item[Table 2: Learning rate under varying $\epsilon$]
-    \item[Table 3: Learning rate under varying learning rates]
-    \item[Table 4: Learning rate under varying difficulties]
-\end{description}
-
+In general, the metrics seem to reach a certain long-run value and then cycle around those values, suggesting that the loss algorithm has converged to a minimum and it is fluctuating around that minimum.
 
 \begin{figure}[H]
 \caption{Results on Easy Difficulty}
@@ -249,7 +258,7 @@ The agent kicks ass and takes names like Chuck Norris on cocaine.
   \includegraphics[scale=0.27]{./kills.png}
   \caption{}
   \label{fig:sfig4}
-\end{subfigure}%
+\end{subfigure}
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=0.27]{./reward.png}
@@ -269,11 +278,11 @@ The agent kicks ass and takes names like Chuck Norris on cocaine.
   \caption{}
   \label{fig:sfig7}
 \end{subfigure}
-\label{fig:fig}
+\label{fig:easyResults}
 \end{figure}
 
 
-
+\bf Hiro: discuss any unexpected problems (e.g. action space, weird agent behavior) \rm
 We ran into the unexpected problem that...
 
 
@@ -286,7 +295,9 @@ Our results suggest that \emph{foo} and \emph{bar} methods worked best because [
 
 Future work on this task might focus on expanding the agent's action space so that the agent can execute continuous movements rather than the discretized actions we have programmed.
 Additionally, researchers could focus on improving DeepMind's convolutional neural network to further enhance the performance or learning curve of the algorithm.
-This might involve different gradient algorithms or initial weights.
+This might involve using different gradient algorithms or initial weights, as well as considering different network architectures.
+
+Overall, this project has shown the power of applying deep reinforcment learning in settings with high degrees of difficulty and with limited knowledge of the environment or game rules.
 
 \end{multicols}
 
