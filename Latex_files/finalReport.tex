@@ -254,22 +254,23 @@ We experimented with using a 9-action space rather than a 5-action space. This l
 In general, the metrics seemed to reach a certain long-run value then cycle around those values, suggesting that the loss algorithm converged to a minimum and was fluctuating around that value.
 
 \begin{figure}[H]
+\captionsetup{justification=centering}
 \caption{Results for Baseline}
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=0.27]{./kills.png}
-  \caption{}
+  \caption{Kills per Life over Iterations}
 \end{subfigure}
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=0.27]{./time.png}
-  \caption{}
+  \caption{Time Alive per Life over Iterations}
 \end{subfigure}
 \vskip\baselineskip
 \centering
 \begin{subfigure}{.25\textwidth}
   \includegraphics[scale=0.27]{./Qvalue.png}
-  \caption{}
+  \caption{Average Action Value over Frames}
 \end{subfigure}
 \label{fig:easyResults}
 \end{figure}
