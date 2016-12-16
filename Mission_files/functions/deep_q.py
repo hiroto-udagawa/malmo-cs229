@@ -19,7 +19,7 @@ filter3_dim = 3
 filter3_depth = 64
 filter3_stride = 1
 
-ACTIONS = 5
+ACTIONS = 9
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 300 # timesteps to observe before training
@@ -27,7 +27,7 @@ OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 32 # timesteps to observe before training
 EXPLORE = 80000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
-INITIAL_EPSILON = 1.0 # starting value of epsilon
+INITIAL_EPSILON = 1 # starting value of epsilon
 #INITIAL_EPSILON = 0.077 # starting value of epsilon
 REPLAY_MEMORY = 20000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
@@ -37,6 +37,7 @@ FRAMES= 3
 class DeepLearner:
     
     def __init__(self):
+        self.save = True;
         self.sess = tf.InteractiveSession()      
         self.agent = DeepAgent()
         self.D = deque()
@@ -156,7 +157,6 @@ class DeepLearner:
         #cv2.imwrite('messigray1.png', np.reshape(s_t1[:,:,0], (84,84)))
         #cv2.imwrite('messigray2.png',np.reshape(s_t1[:,:,1], (84,84)))
         #cv2.imwrite('messigray3.png',np.reshape(s_t1[:,:,2], (84,84)))
-        #cv2.imwrite('messigray4.png',np.reshape(s_t1[:,:,3], (84,84)))
         # store the transition in D
         
         if self.t < 2000:

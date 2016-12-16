@@ -242,12 +242,13 @@ We utilize the work done by Google DeepMind to use a convolutional neural networ
 
 \section{Results and Analysis}
 
-We chose four metrics of agent performance: kills per life, time alive, total reward, and average q-value. 
+We chose four metrics to measure agent performance over training time: cummulative reward per life, kills per life, time alive, and average q-value. 
 
-On all four metrics, the results shown in Figure \ref{fig:easyResults} display clear improvement in the agent's performance across all four metrics.
-Kills per life increased form an initial low of between zero to two to around seven while the agent's lifespan doubled from 100 to around 200 frames. The algorithm was clearly very successful at optimizing the given reward structure: the lifetime reward increased from below zero to around 250, while at some points it achieved well over 500.
+On all four metrics, the results shown in Figure \ref{fig:easyResults} display clear improvement in the agent's performance across all four metrics. Kills per life increased form an initial low of between zero to two to around seven while the agent's lifespan doubled from 100 to around 200 frames. The algorithm was clearly very successful at optimizing the given reward structure: the lifetime reward increased from below zero to around 250, while at some points it achieved well over 500.
 
-In general, the metrics seem to reach a certain long-run value and then cycle around those values, suggesting that the loss algorithm has converged to a minimum and it is fluctuating around that minimum.
+Behaviorally, the agent started out by moving and spinning arbitrarily. By the middle of training, it recognized zombies as object that provide potential reward and began to deliberately keep them in the center of the frame in order to reap this reward. By the end of trainig, the agent even began to learn more complex strategies like moving backward while facing zombies to avoid getting hit, and occasionally lunging into them to capitalize on kills. 
+
+Finally, \ref{subfig:sfig7} shows the increase in the average chosen Q-value over time. It shows that over time our agent gets better at picking an action that results in a higher Q-value, which provides an estimate of how much discounted reward the agent can obtain by following its policy.
 
 \begin{figure}[H]
 \caption{Results on Easy Difficulty}
