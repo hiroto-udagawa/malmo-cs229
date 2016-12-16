@@ -60,7 +60,7 @@ Project Malmo is an open source platform for Minecraft created by Microsoft that
 
 Malmo is a useful environment for artificial intelligence research because it allows users to test endless situations within a relatively simple framework by controlling agents' movements and environments via code. By combining different states, actions, and spaces, researchers can create different environments and define various tasks for which the agent trains with reinforcement learning.
 
-As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed the agents who are deployed in Malmo to be a separate entity from the Minecraft world that tehy reside in. This means that the agent cannot manipulate the world, and the only information our algorithm can utilize are observations that the agent directly experiences from its direct environment.
+As a simulator, Malmo is more constrained than many other simulators which researchers have employed. Microsoft designed the agents who are deployed in Malmo to be a separate entity from the Minecraft world that they reside in. This means that the agent cannot manipulate the world, and the only information our algorithm can utilize are observations that the agent directly experiences from its direct environment. 
 
 This makes Malmo a difficult but interesting platform to build upon. Minecraft is designed to be a rough representation of the real world, and the agents in Malmo are rough representations of human beings. Thus our agent cannot stop time, while it calculates it's next action, and instead it has to train a neural network and quickly decide it's next action in real time. Furthermore, the agent is trained on its first-person visual input, which means in order to know what's behind, he must turn around. This contrasts many of the Atari games tested by DeepMind or in Flappy Bird, where the game provides a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
 
@@ -140,23 +140,20 @@ Note that the target value used in iteration $i$ is calculated with the previous
 
 \subsubsection{Deep Q Network}
 
-We use a convolutional neural network to make predictions since our inputs are images. Our previous MDP formulation for Q-learning implies training the weights using the entire sequence of actions and observations, and making predictions using a state-action pair.
-In practice, we slightly modify this previous formulation for two reasons.
+We use a convolutional neural network to make predictions since our inputs are images. Our previous MDP formulation for Q-learning implies training the weights using the entire sequence of actions and observations, and making predictions using a state-action pair. In practice, we slightly modify this previous formulation for two reasons.
 
-First, neural networks can only handle fixed input size and so we only use the 3 most recent images instead of the entire sequence.
-
-Second, the previous formulation would require doing a 'forward-pass' of the network (i.e. making a prediction using the neural network) every time you wanted to evalute the Q-value of a state-action pair. For a given state and a set of $k$ actions, this would require $k$ forward-passes.
-Instead, we use a network architecture in which only the image is fed to the input layer and outputs are estimates of $Q$-value for each possible action, and so our state is made up of only an image, rather than an image-action pair. The outputs correspond to the predicted $Q$-values of the individual actions for the input state. For the detailed explanation of the exact network architecture, see section 4.4.
+First, neural networks can only handle fixed input size and so we only use the 3 most recent images instead of the entire sequence. 
+Second, the previous formulation would require doing a 'forward-pass' of the network (i.e. making a prediction using the neural network) every time you wanted to evalute the Q-value of a state-action pair. For a given state and a set of $k$ actions, this would require $k$ forward-passes. Instead, we use a network architecture in which only the image is fed to the input layer and outputs are estimates of $Q$-value for each possible action, and so our state is made up of only an image, rather than an image-action pair. The outputs correspond to the predicted $Q$-values of the individual actions for the input state. For the detailed explanation of the exact network architecture, see section 4.4.
 
 \subsubsection{Experience Replay}
 
 Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since consecutive inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions and will vary widely if we use only the recently obtained frames as inputs.
 
-These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use 'experience replay' technique. During gameplay we keep a fixed number of most recent experiences $\{s, a, r, s'\}$ in a 'replay memory', and train the network with random batches of experiences (processed states and actions) sampled from the memory, rather than the most recently obtained states.
+These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use 'experience replay' technique. During gameplay we keep a fixed number of most recent experiences $\{s, a, r, s'\}$ in a 'replay memory', and train the network with random batches of experiences (processed inputs) sampled from the memory, rather than the most recently obtained states. Experience replay smoothes the change of input sampling distribution over time, and allows the images to be used for multiple weight updates, rather than just one.
 
 \subsubsection{$\epsilon$-greedy policy}
 
-One of the fundamental trade-offs in reinforcment learning is exploration vs. exploitation. If the algorithm starts in a certain state and only chooses actions which optimize the Q function based on what it has seen, it could get stuck in a local minimum of the loss function since its experiences would be relatively limited.
+One of the fundamental trade-offs in reinforcment learning is exploration vs. exploitation. If the algorithm starts in a certain state and only chooses actions which optimize the Q function based on what it has seen, it could get stuck in a local minimum of the loss function since it settles for the first "better" strategy it finds and the spectrum of subsequent experiences would be relatively limited.
 
 Randomly choosing an action which the algorithm does \emph{not} believe would optimize the Q function would let the algorithm gather more data about the environment. An $\epsilon$-greedy strategy chooses the optimal action ('the greedy strategy') with probability $1-\epsilon$ and selects a random action with probability $\epsilon$.
 We employ an $\epsilon$-greedy strategy but anneal $\epsilon$ so that it decreases from \bf *** \rm to \bf *** \rm over a period of \bf *** \rm.
@@ -218,7 +215,7 @@ The overall neural network consists of three convolutional layers and two fully 
 
 \subsubsection{Algorithm}
 We use Q-learning to have our agent learn a policy to best fight these zombies.
-We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
+We utilize the work done by Google DeepMind to use a convolutional neural network to approximate the Q-function iteration after iteration.
 
 
 \begin{figure}[H]
@@ -244,6 +241,7 @@ We utilize the work done by Google Deep Mind to use a convolutional neural netwo
 \end{figure}
 
 \section{Results and Analysis}
+
 We chose four metrics of agent performance: kills per life, time alive, total reward, and average q-value. 
 
 On all four metrics, the results shown in Figure \ref{fig:easyResults} display clear improvement in the agent's performance across all four metrics.
