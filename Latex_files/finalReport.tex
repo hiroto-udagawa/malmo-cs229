@@ -214,7 +214,7 @@ The overall neural network consists of three convolutional layers and two fully 
 \end{algorithm*}
 
 \subsubsection{Algorithm}
-The algorithm presented summarizes the pipeline for Deep Q-learning and other important aspects such as experience replat and $\epsilon$-greedy strategy. 
+The algorithm presented summarizes the pipeline for Deep Q-learning and other important aspects such as experience replay and $\epsilon$-greedy strategy. 
 We utilize the work done by Google DeepMind to use a convolutional neural network to approximate the Q-function iteration after iteration.
 
 
@@ -241,6 +241,15 @@ We utilize the work done by Google DeepMind to use a convolutional neural networ
 \end{figure}
 
 \section{Results and Analysis}
+
+>>>>>>>>>>>>>>>>>>>>this part is c + p from DM paper
+
+The average total reward metric tends to be very noisy because small changes to the weights of a policy can lead to large changes in the distribution of states the policy visits . The leftmost two plots in figure 2 show how the average total reward evolves during training on the games Seaquest and Breakout. Both averaged reward plots are indeed quite noisy, giving one the impression that the learning algorithm is not making steady progress. Another, more stable, metric is the policy’s estimated action-value function Q, which provides an estimate of how much discounted reward the agent can obtain by following its policy from any given state. We collect a fixed set of states by running a random policy before training starts and track the average of the maximum2 predicted Q for these states. The two rightmost plots in figure 2 show that average predicted Q increases much more smoothly than the average total reward obtained by the agent and plotting the same metrics on the other five games produces similarly smooth curves.
+
+>>>>>>>>>>>>>>>>>>>>end 
+
+
+
 
 We chose four metrics of agent performance: kills per life, time alive, total reward, and average q-value. 
 
@@ -287,6 +296,7 @@ We ran into the unexpected problem that...
 
 
 \section{Conclusions and Future work}
+
 We succesfully trained a Deep Q Network to move around a room and kill zombies by taking visual input from the agent.
 Our results suggest that \emph{foo} and \emph{bar} methods worked best because [...]
 
