@@ -11,6 +11,10 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage{tabu}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage{caption}
 
 \graphicspath{{ ./ }}
 
@@ -29,17 +33,24 @@ In this project, we train an agent in the video game Minecraft to kill as many z
 
 Ultimately, using a convolutional neural network and Q-function reinforcement learning, the agent showed definite improvement in its ability to kill zombies. This project displays the promise of combining deep learning with reinforcement learning to achieve non-trivial tasks.
 
+
+
+
+
 \section{Related Work}
 
 There have been several research projects in this area which we drew upon for our project.
 The major inspiration for our work was DeepMind's 2013 paper on deep reinforcement learning, in which the agent was trained with a single model architecture (Deep Q Learning) that uses a convolutional neural network to perform a variant of Q-learning, and successfully played 7 different Atari 2600 games, in a few of which the agent outperformed human experts \cite{deepMind}.
-Instead of solving the standard action-value function (Q function) with Bellman equations, a deep convolutional neural network was used as a nonlinear function approximator. DeepMind also employed a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
+Instead of solving the standard action-value function (Q function) with Bellman equations, deep convolutional neural network was used as a nonlinear function approximator. DeepMind also employed a biology inspired technique known as experience replay, which attempts to fix the divergence due to correlation between sequential inputs.
 While a different network was trained for each game, the same architecture and hyperparameters were used across all of the games.
 Furthermore, no prior (or game specific) knowledge was used, but only the raw pixel values were fed to the network as inputs.
 DeepMind's major achievement was using extremely high-dimensional states (the visual input from the agent) and no information about the game rules to train an algorithm which could outperform skilled human players, and we aimed to replicate this in our project.
 
 For the actual implementation of our project, we built on the work of Chen (2015), which also relied on DeepMind's DQN and applied the same model architecture and algorithm to the game Flappy Bird \cite{flappyBird}.
-We sought to expand on his work by applying DeepMind's architecture to a more complicated setting. While Flappy Bird has only two possible actions and no opponents, Minecraft has a continuous action space and our setting includes zombies actively trying to kill the agent.
+We sought to expand on his work by applying DeepMind's architecture to a more complicated setting.
+While Flappy Bird has only two possible actions and no opponents, Minecraft has a continuous action space and our setting includes zombies actively trying to kill the agent.
+
+
 
 
 \section{Minecraft and Project Malmo}
@@ -54,6 +65,8 @@ As a simulator, Malmo is more constrained than many other simulators which resea
 This makes Malmo a difficult but interesting platform to build upon. Minecraft is designed to be a rough representation of the real world, and the agents in Malmo are rough representations of human beings. Thus our agent cannot stop time, while it calculates it's next action, and instead it has to train a neural network and quickly decide it's next action in real time. Furthermore, the agent is trained on its first-person visual input, which means in order to know what's behind, he must turn around. This contrasts many of the Atari games tested by DeepMind or in Flappy Bird, where the game provides a bird's-eye view, which gives much more information than the agent's first-person view in Minecraft.
 
 
+
+
 \section{Method}
 
 
@@ -66,16 +79,19 @@ The agent begins in the middle of a completely flat room with a fixed number of 
 \caption{Minecraft screenshot}
 \centering
 \includegraphics[scale=0.3]{./hiro_screenshot.png}
+\label{fig:screenShot}
 \end{figure}
 
 \subsection{MDP Formulation}
 
-We formalize the reinforcement learning task with Markov Decision Process.
+We formalize the reinforcement learning task as a Markov Decision Process.
 The agent interacts with an environment by making observations and actions, and receiving rewards.
-At each iteration, the agent selects an action from the action space, $A = {1, . . . , K }$.
-Agent's action in turn changes the state the agent is in and the agent receives rewards based on the new state it enters.
+At each iteration, the agent selects an action from the action space, $A = {1, \dots , K }$.
+This action then changes the state the agent is in and the agent receives rewards based on the new state it enters.
 The reward often depends not only on the new state it just entered, but the entire sequence of actions and observations it made until it entered the current state.
-Thus, to make an appropriate action in the current state, the agent needs information from previous actions and observations as well as the current observation. We therefore consider sequences of actions and observations $s_t = x_1, a_1, x_2, ..., a_{t-1}, x_t$. All such sequences are finite; thus we now have finite Markov decision process (MDP), where we use the sequence $s_t$ as a distinct state at each time-step $t$.
+Thus, to make an appropriate action in the current state, the agent needs information from previous actions and observations as well as the current observation.
+We therefore consider sequences of actions and observations $s_t = x_1, a_1, x_2, ..., a_{t-1}, x_t$, where $x_t$ is the pixel values of the visual input from the agent at time $t$.
+All such sequences are finite; thus we now have finite Markov decision process (MDP), where we use the sequence $s_t$ as a distinct state at each time-step $t$.
 
 \subsubsection{Actions and States}
 
@@ -88,9 +104,15 @@ As stated earlier, the state at time-step $t$ is a sequence of observations and 
 
 \subsubsection{Reward}
 
-We assign the algorithm a reward of +1 for a successful hit on a zombie and a reward of +5 for a successful kill.
-There is also a reward of 0.03 for every frame for which it stays alive and a penalty of -1 for every time the agent gets hit. These are designed to train the agent's behavior to incentivize staying alive; holding the kill count equal, we wanted the agent to have a higher reward for staying alive longer.
+We assign the algorithm the following reward structure:
+\begin{itemize}
+    \item +1 for a successful hit on a zombie
+    \item +5 for a successful kill
+    \item -1 for getting hit by a zombie
+    \item +0.03 for every frame in which the agent stays alive
+\end{itemize}
 
+The last reward is designed to train the agent's behavior to incentivize staying alive; holding the kill count equal, we wanted the agent to have a higher reward for staying alive longer.
 
 \subsection{Q-learning and Deep Q Network}
 
@@ -102,115 +124,163 @@ $Q^{*}(s, a) = \max_\pi \mathbb{E}[R_t | s_t = s, a_t = a, \pi]$,
 which is the maximum expected return achievable by following any strategy,
 after seeing some sequence $s$ and then taking some action $a$, and where $\pi$ is a policy mapping sequences to actions (or distributions over actions).
 
-In simpler settings, the optimal policy is obtained by solving the Bellman equation iteratively, using the equation $Q_i^*(s,a) = \mathbb{E}[r +  \max_{a'} Q^* (s', a' )| s, a]$.
+In simpler settings, the optimal policy is obtained by solving the Bellman equation iteratively, using the equation $Q_{i+1}^*(s,a) = \mathbb{E}[r +  \max_{a'} Q_i^* (s', a' )| s, a]$, where $i$ is the current iteration.
 However, maintaining estimates of action-value function for all sequences (states) is impossible and yields no generalization for newly encountered states.
-This is especially problematic in our setting, where the number of states is extremely large due to the high dimensionality of our input (i.e. pixels from the agent's visual input).
+This is especially problematic in our setting, where the number of states is extremely large due to the high dimensionality of our input (i.e. pixels from the agent's visual feed).
 
-Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. We train the neural network approximator $Q(s,a,\theta)$ by minimizing a loss functions $L_i(\theta)$ defined for each iteration $i$, (where $\theta$ are the Q-network weights)
+Instead, we use a convolutional neural network as a nonlinear function approximator to estimate the action-value function. Let $\theta$ be the neural network weights We train the neural network approximator $Q(s,a,\theta)$ by minimizing the loss function $L_i(\theta)$:
 
 \begin{equation*}
     L_i(\theta_i) = \mathbb{E}_{s,a \sim \rho(·)} [(y_i - Q (s, a; \theta_i))^2]
 \end{equation*}
 
 
-where $y_i = \mathbb{E}_{s' \sim \epsilon}[r + \gamma \max_{a'} Q(s', a'; \theta_{i-1} | s, a]$ is the target for iteration $i$ and $\rho(s, a)$, the behaviour distribution, is a distribution over states $s$ and actions $a$.
-Note that the target value used in iteration $i$ is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution.
+Where $y_i = \mathbb{E}_{s' \sim \epsilon}[r + \gamma \max_{a'} Q(s', a'; \theta_{i-1} | s, a]$ is the target for iteration $i$ and $\rho(s, a)$, the behaviour distribution, is a distribution over states $s$ and actions $a$.
+Note that the target value used in iteration $i$ is calculated with the previous iteration's network weights. For faster computation at each iteration, stochastic gradient descent is used; instead of calculating the expectation, we update the weights with a single sample from distribution (see section 4.3.3 below).
 
 \subsubsection{Deep Q Network}
 
-Since the observation the agent receives is an image (pixel values) of the gameplay screen, convolutional neural network is a reasonable choice of neural network. Although in the formulation of the MDP we stated that each state is an entire sequence of actions and observations, neural networks can only handle fixed input size. Furthermore, the state(sequence) contains actions as well as images, but including action in the input layer requires multiple forward passes, getting the actiona-value funciton output for each action in the action space. To deal with these issues, we 1) only use the 3 most recent images instead of the entire sequence, and 2) use a network architecture in which only the image is fed to the input layer and outputs are estimates of Q value for each possible action. For the detailed explanation of the exact network architecture, see section 'Training'. 
+We use a convolutional neural network to make predictions since our inputs are images. Our previous MDP formulation for Q-learning implies training the weights using the entire sequence of actions and observations, and making predictions using a state-action pair. In practice, we slightly modify this previous formulation for two reasons.
+
+First, neural networks can only handle fixed input size and so we only use the 3 most recent images instead of the entire sequence. 
+Second, the previous formulation would require doing a 'forward-pass' of the network (i.e. making a prediction using the neural network) every time you wanted to evalute the Q-value of a state-action pair. For a given state and a set of $k$ actions, this would require $k$ forward-passes. Instead, we use a network architecture in which only the image is fed to the input layer and outputs are estimates of $Q$-value for each possible action, and so our state is made up of only an image, rather than an image-action pair. The outputs correspond to the predicted $Q$-values of the individual actions for the input state. For the detailed explanation of the exact network architecture, see section 4.4.
 
 \subsubsection{Experience Replay}
 
-Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since the sequential inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions. Therefore, if the agent relies only on the most recent inputs, the distribution will vary widely. 
+Often, there is a delay between actions and resulting rewards, and little association between the most recent input and the reward it just received. Also, the inputs are not independent, since consecutive inputs are highly correlated. Furthermore, the distribution of the input states is influenced heavily by recently taken actions and will vary widely if we use only the recently obtained frames as inputs.
 
-These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use the technique named experience replay. During gameplay the agent keeps a fixed size of most recent experiences (or transitions) {s, a, r, s'} in a replay memory, and train the network with random batches of experiences(states/sequences) sampled from the memory, rather than the most recently obtained states. Experience replay smoothes the change of input sampling distribution over time, and allows the images to be used for multiple weight updates, rather than just one.  
+These issues can lead to neural network taking too long to converge, or being very unstable and unable to learn efficiently. To de-correlate the inputs and stabilize the fluctuation of input sampling distribution, we use 'experience replay' technique. During gameplay we keep a fixed number of most recent experiences $\{s, a, r, s'\}$ in a 'replay memory', and train the network with random batches of experiences (processed inputs) sampled from the memory, rather than the most recently obtained states. Experience replay smoothes the change of input sampling distribution over time, and allows the images to be used for multiple weight updates, rather than just one.
 
 \subsubsection{$\epsilon$-greedy policy}
 
- e-greedy strategy that follows the greedy strategy with probability 1-e and selects a random action with probability e.
+One of the fundamental trade-offs in reinforcment learning is exploration vs. exploitation. If the algorithm starts in a certain state and only chooses actions which optimize the Q function based on what it has seen, it could get stuck in a local minimum of the loss function since it settles for the first "better" strategy it finds and the spectrum of subsequent experiences would be relatively limited.
+
+Randomly choosing an action which the algorithm does \emph{not} believe would optimize the Q function would let the algorithm gather more data about the environment. An $\epsilon$-greedy strategy chooses the optimal action ('the greedy strategy') with probability $1-\epsilon$ and selects a random action with probability $\epsilon$.
+We employ an $\epsilon$-greedy strategy but anneal $\epsilon$ so that it decreases from \bf *** \rm to \bf *** \rm over a period of \bf *** \rm.
 
 
 \subsection{Training}
 
 \subsubsection{Preprocessing}
 
-The raw pixel frames we can get through Malmo platform is 480 x 640 x 3 with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of 3 most recent frames, the final input dimension is 84 x 84 x 3. 
+The raw pixel frames we received through the Malmo platform are 480 x 640 x 3 in dimension with 256 possible values for each color channel. To reduce the input to more manageable size, the images were preprocessed: we converted the image from the RGB to grayscale and rescaled it to 84 x 84. Since the actual input fed into the neural network is a stack of the 3 most recent frames, the final input dimension is 84 x 84 x 3.
 
 \subsubsection{Model Architecture}
 
-The overall neural network consists of three convolutional layers and two fully connected layers. The input layer takes an 84 x 84 x 3 preprocessed image. The first hidden layer convolves the input with 32 filters of 8 x 8 with stride 4 and applies a rectifier nonlinearity. The second hidden layer convolves with 64 filters of 4 x 4 with stride 2, followed by a rectifier nonlinearity. The third layer convolves 64 filters of 3 x 3 with stride 1, again followed by a rectifier. The final hidden layer is fully-connected layer of 512 rectifier units. The output layer is a fully-connected linear layer (no rectifier) with an output node for each action in the action space. Our network has 5 output nodes. The following table summarizes the input and filter size at each layer of the network.
+The overall neural network consists of three convolutional layers and two fully connected layers. The input layer takes an 84 x 84 x 3 preprocessed image. The first hidden layer convolves the input with 32 filters of 8 x 8 with stride 4 and applies a rectifier nonlinearity. The second hidden layer convolves with 64 filters of 4 x 4 with stride 2, followed by a rectifier nonlinearity. The third layer convolves 64 filters of 3 x 3 with stride 1, again followed by a rectifier. The final hidden layer is a fully-connected layer of 512 rectifier units. The output layer is a fully-connected linear layer (no rectifier) with an output node for each action in the action space. Our network has 5 output nodes. The following table summarizes the input and filter size at each layer of the network.
+\newline
 
-\begin{tabular}{|l|l|l|l|l|l|}
-        \hline
-Layer & Input    & Filter size & Stride & Num Filters & Output   \\ \hline
-conv1 & 84x84x3  & 8x8         & 4      & 32          & 20x20x32 \\ \hline
-conv2 & 20x20x32 & 4x4         & 2      & 64          & 9x9x64   \\ \hline
-conv3 & 9x9x64   & 3x3         & 1      & 64          & 7x7x64   \\ \hline
-fc4   & 7x7x64   &             &        & 512         & 512      \\ \hline
-fc5   & 512      &             &        & 18          & 18     \\ \hline
-\end{tabular}
-  
-\subsubsection{Algorithm}
-
-We use Q-learning to have our agent learn a policy to best fight these zombies.
-We utilize the work done by Google Deep Mind to use a convolutional neural network to approximate the Q-function iteration after iteration.
-\paragraph{}
+\begin{minipage}{\columnwidth}
+\captionof{table}{Input and Filter Sizes of Neural Network}
+{
+\centering
+\begin{tabu} to 0.9\columnwidth {X[0.6]X[1.2]XX[0.6]XX[1.2]}
+    \hline
+    Layer & Input    & Filter size & Stride & Num Filters & Output   \\[9pt] \hline
+    conv1 & 84x84x3  & 8x8         & 4      & 32          & 20x20x32 \\ \hline
+    conv2 & 20x20x32 & 4x4         & 2      & 64          & 9x9x64   \\ \hline
+    conv3 & 9x9x64   & 3x3         & 1      & 64          & 7x7x64   \\ \hline
+    fc4   & 7x7x64   &             &        & 512         & 512      \\ \hline
+    fc5   & 512      &             &        & 18          & 18     \\ \hline
+\end{tabu}
+}
+\end{minipage}
 
 
 \begin{algorithm*}[H]
      \SetAlgoLined
-     initialize Q function with random weights \;
-     observe initial state $S$ \;
+     initialize $Q$ function with random weights \;
+     initialize replay memory $\mathcal{D}$ \;
      \Repeat{terminated} {
-        with probability $\epsilon$ generate random action \;
-        otherwise select $a = \arg\max_{a'} Q(s,a')$ \;
+     observe initial state $S$ \;
+        \While{agent is alive} {
+        \DontPrintSemicolon with probability $\epsilon$: \;
+        \PrintSemicolon \Indp generate random action $a$ \;
+        \DontPrintSemicolon \Indm otherwise: \;
+        \PrintSemicolon \Indp select $a = \arg\max_{a'} Q^*(s,a',\theta)$ \;
+        \Indm
         carry out action $a$ \;
-        observe reward $r$ and new state $s'$ \;
-        update $D$ with new data: $<s,a,r,s'>$ \;
+        observe reward $r$ and new image $x'$ \;
+        preprocess $x'$ into $\phi'$ \;
+        update $\mathcal{D}$ with new data: $<\phi,a,r,\phi'>$ \;
         sample random transitions from $D$ \;
-        update network \;
+        update the Q Network weights to $\theta'$: \;
+        \Indp
+        Set $y = \mathbb{E}[r + \gamma\max_{a'}Q(s',a',\theta)] $\;
+        Perform gradient descent on $L(\theta) = \mathbb{E}[(y - Q(s,a,\theta))^2]$  \;
+        }
      }
      \caption{Adapted from Mnih et al, 2015}
 \end{algorithm*}
 
+\subsubsection{Algorithm}
+We use Q-learning to have our agent learn a policy to best fight these zombies.
+We utilize the work done by Google DeepMind to use a convolutional neural network to approximate the Q-function iteration after iteration.
+
+
 \begin{figure}[H]
+\centering
 \caption{Images of processed features}
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray1.png}
-  \caption{1a}
   \label{fig:sfig1}
 \end{subfigure}%
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray2.png}
-  \caption{1b}
   \label{fig:sfig2}
 \end{subfigure}
-%\vskip\baselineskip
+\vskip\baselineskip
 \begin{subfigure}{.25\textwidth}
   \centering
   \includegraphics[scale=1.0]{./messigray3.png}
-  \caption{1c}
   \label{fig:sfig3}
 \end{subfigure}
-\label{fig:fig}
+\label{fig:processedPics}
 \end{figure}
-
-
 
 \section{Results and Analysis}
 
-The agent kicks ass and takes names like Chuck Norris on cocaine.
+We chose four metrics of agent performance: kills per life, time alive, total reward, and average q-value. 
 
-\begin{description}
-    \item[Table 1: Learning rate under varying Reward Structures]
-    \item[Table 2: Learning rate under varying $\epsilon$]
-    \item[Table 3: Learning rate under varying learning rates]
-    \item[Table 4: Learning rate under varying difficulties]
-\end{description}
+On all four metrics, the results shown in Figure \ref{fig:easyResults} display clear improvement in the agent's performance across all four metrics.
+Kills per life increased form an initial low of between zero to two to around seven while the agent's lifespan doubled from 100 to around 200 frames. The algorithm was clearly very successful at optimizing the given reward structure: the lifetime reward increased from below zero to around 250, while at some points it achieved well over 500.
 
+In general, the metrics seem to reach a certain long-run value and then cycle around those values, suggesting that the loss algorithm has converged to a minimum and it is fluctuating around that minimum.
+
+\begin{figure}[H]
+\caption{Results on Easy Difficulty}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.27]{./kills.png}
+  \caption{}
+  \label{fig:sfig4}
+\end{subfigure}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.27]{./reward.png}
+  \caption{}
+  \label{fig:sfig5}
+\end{subfigure}
+\vskip\baselineskip
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.27]{./time.png}
+  \caption{}
+  \label{fig:sfig6}
+\end{subfigure}
+\begin{subfigure}{.25\textwidth}
+  \centering
+  \includegraphics[scale=0.27]{./Qvalue.png}
+  \caption{}
+  \label{fig:sfig7}
+\end{subfigure}
+\label{fig:easyResults}
+\end{figure}
+
+
+\bf Hiro: discuss any unexpected problems (e.g. action space, weird agent behavior) \rm
 We ran into the unexpected problem that...
 
 
@@ -223,7 +293,9 @@ Our results suggest that \emph{foo} and \emph{bar} methods worked best because [
 
 Future work on this task might focus on expanding the agent's action space so that the agent can execute continuous movements rather than the discretized actions we have programmed.
 Additionally, researchers could focus on improving DeepMind's convolutional neural network to further enhance the performance or learning curve of the algorithm.
-This might involve different gradient algorithms or initial weights.
+This might involve using different gradient algorithms or initial weights, as well as considering different network architectures.
+
+Overall, this project has shown the power of applying deep reinforcment learning in settings with high degrees of difficulty and with limited knowledge of the environment or game rules.
 
 \end{multicols}
 
@@ -234,7 +306,6 @@ This might involve different gradient algorithms or initial weights.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \pagebreak
 \begin{thebibliography}{9}
-
 
 \bibitem{deepMind}
 Mnih, Volodymyr; Kavukcuoglu, Koray; Silver, David; Graves, Alex; Antonoglou, Ioannis; Wierstra, Daan; Riedmiller, Martin.
@@ -249,7 +320,12 @@ Matiisen, Tambet.
 \bibitem{flappyBird}
 Chen, Kevin.
 \emph{Deep Reinforcment Learning for Flappy Bird}
+2015.
 
+\bibitem{natureDeepMind}
+Volodymyr Mnih,	Koray Kavukcuoglu,	David Silver, Andrei A. Rusu, Joel Veness, Marc G. Bellemare, Alex Graves,	Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou,	Helen King,	Dharshan Kumaran, Daan Wierstra, Shane Legg, Demis Hassabis.
+\emph{Human-level control through deep reinforcement learning}.
+February 2015.
 
 \end{thebibliography}
 
