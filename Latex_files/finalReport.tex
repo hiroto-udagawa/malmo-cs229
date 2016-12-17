@@ -246,37 +246,6 @@ The baseline results shown in Figure \ref{fig:easyResults} display clear improve
 
 Behaviorally, the agent started out by moving and spinning arbitrarily. By the middle of training, it recognized zombies as objects that provide potential rewards and began to keep them in the center of the frame to achieve this reward. By the end of training, the agent even began to learn more complex strategies like moving backward while facing zombies to avoid getting hit, and occasionally lunging into them to capitalize on kills.
 
-Figure \ref{fig:qvalueComp} shows the increase in the average chosen Q-value over time (the red line displays the baseline configuration). It shows that over time the agent gets better at picking an action that results in a higher Q-value, which provides an estimate of how much discounted reward the agent can obtain by following its policy.
-
-We experimented with changing our configuration in two ways.
-First, we increased the action space from five to nine actions, with an additional three turning speeds.
-As shown in Figures \ref{fig:rewardComp5vs9} and \ref{fig:qvalueComp}, this resulted in \emph{worse} performance for the agent.
-The cumulative reward per episode increased to an average of just below 100, while it broke 200 in the baseline five-action space configuration, while the average q-value was noticeably lower than under the baseline configuration.
-This could be because the neural network has to make predictions across more actions for any given state, and with the same amount of data, the quality of those predictions would suffer.
-If this is the case, the algorithm simply needs more time to train.
-Alternatively, it could be that the nature of the nine-action space adds more complexity without adding performance and its performance might never equal the performance under the five-action space.
-It is difficult to speculate on which explanation is more likely without running longer trials.
-
-The other experiment we ran was increasing the number of zombies from five to seven and spawning them scattered around the room rather than clumped in one space; we called this `hard' difficulty as opposed to the `easy' difficulty under the baseline configuration.
-As expected, the agent's performance is noticeably worse under this difficulty, with both reward (Figure \ref{fig:rewardCompEasy_vs_Hard} ) and average q-value (Figure \ref{fig:qvalueComp}) being lower than under the easy difficulty.
-Interestingly, the agent's initially change in reward and average q-value is shallow and sometimes even negative under the hard difficulty before increasing.
-This suggests that that the greedy policy initially led to worse outcomes than the random action.
-
-One unexpected agent behavior we encountered was its inability to respond to attacks outside its field of view. Since these attacks don't alter its state, the agent did not learn to turn around face zombies.
-This behavior typifies the limitations of simulations in Minecraft: without a third-person view or more information of some kind, it would be difficult to train the agent to respond to these attacks.
-
-
-\section{Conclusions and Future work}
-
-We succesfully trained a Deep Q Network to move around a room and kill zombies by taking visual input from the agent.
-This project shows the promise of combining deep Q-learning with reinforcement learning to play games and accomplish difficult tasks.
-Specifically, the convolutional neural network allowed us to make meaningful predictions for optimal actions even with extremely high numbers of states.
-
-Future work on this task might focus on modifying or expanding the agent's action space so that the agent can perform better or wider range of movements and therefore can better simulate natural movement.
-Researchers could also incorporate audio information from the game so that when the agent has zombies behind it, it can respond by facing to turn and attack.
-While this would move away from DeepMind's goal of mimicking a gamer's experience, this would better approximate human sensory input.
-
-Additionally, researchers could focus on tuning convolutional neural network to further enhance the performance or learning curve of the algorithm. This might involve using different gradient descent algorithms or initial weights, as well as considering different network architectures.
 
 \begin{figure}[H]
 \captionsetup{justification=centering}
@@ -300,12 +269,43 @@ Additionally, researchers could focus on tuning convolutional neural network to 
 \label{fig:easyResults}
 \end{figure}
 
+
+Figure \ref{fig:qvalueComp} shows the increase in the average chosen Q-value over time (the red line displays the baseline configuration). It shows that over time the agent gets better at picking an action that results in a higher Q-value, which provides an estimate of how much discounted reward the agent can obtain by following its policy.
+
+We experimented with changing our configuration in two ways.
+First, we increased the action space from five to nine actions, with an additional three turning speeds.
+As shown in Figures \ref{fig:rewardComp5vs9} and \ref{fig:qvalueComp}, this resulted in \emph{worse} performance for the agent.
+The cumulative reward per episode increased to an average of just below 100, while it broke 200 in the baseline five-action space configuration, while the average q-value was noticeably lower than under the baseline configuration.
+This could be because the neural network has to make predictions across more actions for any given state, and with the same amount of data, the quality of those predictions would suffer.
+If this is the case, the algorithm simply needs more time to train.
+Alternatively, it could be that the nature of the nine-action space adds more complexity without adding performance and its performance might never equal the performance under the five-action space.
+It is difficult to speculate on which explanation is more likely without running longer trials.
+
+The other experiment we ran was increasing the number of zombies from five to seven and spawning them scattered around the room rather than clumped in one space; we called this `hard' difficulty as opposed to the `easy' difficulty under the baseline configuration.
+As expected, the agent's performance is noticeably worse under this difficulty, with both reward (Figure \ref{fig:rewardCompEasy_vs_Hard} ) and average q-value (Figure \ref{fig:qvalueComp}) being lower than under the easy difficulty.
+Interestingly, the agent's initially change in reward and average q-value is shallow and sometimes even negative under the hard difficulty before increasing.
+This suggests that that the greedy policy initially led to worse outcomes than the random action.
+
+One unexpected agent behavior we encountered was its inability to respond to attacks outside its field of view. Since these attacks don't alter its state, the agent did not learn to turn around face zombies.
+This behavior typifies the limitations of simulations in Minecraft: without a third-person view or more information of some kind, it would be difficult to train the agent to respond to these attacks.
+
 \begin{figure}[H]
 \caption{Comparing 5-Action space vs 9-Action space}
 \centering
 \includegraphics[scale=0.5]{./5vs9.png}
 \label{fig:rewardComp5vs9}
 \end{figure}
+
+\section{Conclusions and Future work}
+
+We succesfully trained a Deep Q Network to move around a room and kill zombies by taking visual input from the agent.
+This project shows the promise of combining deep Q-learning with reinforcement learning to play games and accomplish difficult tasks.
+Specifically, the convolutional neural network allowed us to make meaningful predictions for optimal actions even with extremely high numbers of states.
+
+Future work on this task might focus on modifying or expanding the agent's action space so that the agent can perform better or wider range of movements and therefore can better simulate natural movement.
+Researchers could also incorporate audio information from the game so that when the agent has zombies behind it, it can respond by facing to turn and attack.
+While this would move away from DeepMind's goal of mimicking a gamer's experience, this would better approximate human sensory input.
+
 
 \begin{figure}[H]
 \caption{Comparing Easy vs Hard Difficulty}
@@ -338,20 +338,20 @@ Overall, this project has shown the power of applying deep reinforcment learning
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{thebibliography}{9}
 
-\bibitem{deepMind}
-Mnih, Volodymyr; Kavukcuoglu, Koray; Silver, David; Graves, Alex; Antonoglou, Ioannis; Wierstra, Daan; Riedmiller, Martin.
-\emph{Playing Atari with Deep Reinforcement Learning},
-December 2013.
+\bibitem{flappyBird}
+Chen, Kevin.
+\emph{Deep Reinforcment Learning for Flappy Bird}
+2015.
 
 \bibitem{nervanasys}
 Matiisen, Tambet.
 \emph{Demystifying Deep Reinforcement Learning}. December 2015.
 \url{https://www.nervanasys.com/demystifying-deep-reinforcement-learning/}
 
-\bibitem{flappyBird}
-Chen, Kevin.
-\emph{Deep Reinforcment Learning for Flappy Bird}
-2015.
+\bibitem{deepMind}
+Mnih, Volodymyr; Kavukcuoglu, Koray; Silver, David; Graves, Alex; Antonoglou, Ioannis; Wierstra, Daan; Riedmiller, Martin.
+\emph{Playing Atari with Deep Reinforcement Learning},
+December 2013.
 
 \bibitem{natureDeepMind}
 Volodymyr Mnih,	Koray Kavukcuoglu,	David Silver, Andrei A. Rusu, Joel Veness, Marc G. Bellemare, Alex Graves,	Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou,	Helen King,	Dharshan Kumaran, Daan Wierstra, Shane Legg, Demis Hassabis.
