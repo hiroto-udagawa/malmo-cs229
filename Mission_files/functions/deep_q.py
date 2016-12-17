@@ -19,7 +19,7 @@ filter3_dim = 3
 filter3_depth = 64
 filter3_stride = 1
 
-ACTIONS = 9
+ACTIONS = 5
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 1000 # timesteps to observe before training
 #OBSERVE = 300 # timesteps to observe before training
@@ -55,7 +55,8 @@ class DeepLearner:
         cost = tf.reduce_mean(tf.square(self.y - readout_action))
         self.train_step = tf.train.AdamOptimizer(1e-6).minimize(cost)
         #self.train_step = tf.train.RMSPropOptimizer(learning_rate=0.00025, decay=0.9, momentum=0.95).minimize(cost)
-        
+        self.max = 100
+        self.min  = 100
         self.saver = tf.train.Saver()
         self.sess.run(tf.initialize_all_variables())
         checkpoint = tf.train.get_checkpoint_state("networks")
@@ -244,7 +245,7 @@ class DeepLearner:
         r_t = self.agent.getReward(ob)
 
         terminal = False 
-        s_t1 = np.append(x_t1, self.s_t[:, :, :3], axis=2)
+        s_t1 = np.append(x_t1, self.s_t[:, :, :FRAMES-1], axis=2)
         
         self.s_t = s_t1
         self.t += 1
@@ -257,6 +258,15 @@ class DeepLearner:
         self.a_t = np.zeros([ACTIONS])
         action_index = np.argmax(readout_t)
         self.a_t[action_index] = 1
+        print max(readout_t)
+        if max(readout_t)> self.max:
+            cv2.imwrite('hiq.png', self.agent.getPixels(frame))
+            self.max = max(readout_t)
+        elif max(readout_t) < self.min:
+            cv2.imwrite('lowq.png', self.agent.getPixels(frame))
+            self.min = max(readout_t)
+            print "DONE WITH LOW"
+        
         
         # print info
         state = ""
