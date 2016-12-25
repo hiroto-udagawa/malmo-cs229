@@ -1,0 +1,46 @@
+
+<Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<About>
+		<Summary>Zombie Fighting Mission</Summary>
+	</About>
+
+	<ServerSection>
+		<ServerInitialConditions>
+			<Weather>clear</Weather>
+      <Time>
+          <StartTime>9500</StartTime>
+          <AllowPassageOfTime>false</AllowPassageOfTime>
+      </Time>
+		</ServerInitialConditions>
+		<ServerHandlers>
+      <FlatWorldGenerator generatorString="3;7,220*1,5*3,2;3;dungeon" />
+			<DrawingDecorator>	
+        <DrawCuboid x1="-28" y1="206" z1="-30" x2="28" y2="240" z2="30" type="stone"/>
+        <DrawCuboid x1="-27" y1="207" z1="-29" x2="27" y2="240" z2="29" type="air"/>								
+			</DrawingDecorator>
+			<ServerQuitFromTimeUp timeLimitMs="100000"/>
+			<ServerQuitWhenAnyAgentFinishes/>
+		</ServerHandlers>
+	</ServerSection>
+	<AgentSection mode="Survival">
+		<Name>Chuck Norris on Cocaine</Name>
+		<AgentStart>
+      <Placement x="0" y="207" z="-12" pitch="20" yaw="0"/>
+			<Inventory>
+				<InventoryItem slot="0" type="diamond_sword"/>
+			</Inventory>
+		</AgentStart>
+		<AgentHandlers>
+      <VideoProducer want_depth="false">
+          <Width>640</Width>
+          <Height>480</Height>
+      </VideoProducer>
+			<ChatCommands />
+			<ContinuousMovementCommands />
+			<ObservationFromFullStats/>
+			<ObservationFromRay/>
+			<RewardForSendingCommand reward="-1" />
+		</AgentHandlers>
+	</AgentSection>
+</Mission>
